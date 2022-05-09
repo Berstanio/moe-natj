@@ -260,7 +260,17 @@ public class NatJ {
 
             Library lann = type.getAnnotation(Library.class);
             if (lann != null) {
-                lookUpLibrary(lann.value(), true);
+                try {
+                    lookUpLibrary(lann.value(), true);
+                } catch (RuntimeException e) {
+                    /*
+                     * Because the framework get's renamed from AVFoundation to AVFAudio, we use fallback code to support older iOS versions
+                     * that hasn't the renamed framework present
+                     * */
+                    if (lann.value().equals("AVFAudio")) {
+                      lookUpLibrary("AVFoundation", true);
+                  }
+                }
             }
 
             NativeRuntime runtime = getRuntime(type, true);
