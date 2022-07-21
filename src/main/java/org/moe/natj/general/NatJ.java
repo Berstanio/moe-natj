@@ -105,6 +105,14 @@ public class NatJ {
             new HashSet<Class<? extends NativeRuntime>>();
 
     /**
+     * If a framework isn't available, this map defines fallback frameworks. NonExistentFramework -> FallbackFramework.
+     * Chained fallbacks are not possible, like FA -> FB and FB -> FC.
+     */
+    private final static Map<String, String> frameworkFallbackMap = new HashMap<String, String>() {{
+        put("AVFAudio", "AVFoundation");
+    }};
+
+    /**
      * A placeholder runtime instance, used for registering a runtime as invalid;.
      */
     private static NativeRuntime invalidRuntime = new NativeRuntime(null, null, null) {
@@ -264,12 +272,14 @@ public class NatJ {
                     lookUpLibrary(lann.value(), true);
                 } catch (RuntimeException e) {
                     /*
-                     * Because the framework get's renamed from AVFoundation to AVFAudio, we use fallback code to support older iOS versions
-                     * that hasn't the renamed framework present
+                     * If a framework got renamed, we add fallback code to support older iOS versions.
+                     *  E.g. AVFAudio falls back to AVFoundation
                      * */
-                    if (lann.value().equals("AVFAudio")) {
-                      lookUpLibrary("AVFoundation", true);
-                  }
+                    if (frameworkFallbackMap.containsKey(lann.value())) {
+                        lookUpLibrary(frameworkFallbackMap.get(lann.value()), true);
+                    } else {
+                        throw e;
+                    }
                 }
             }
 
