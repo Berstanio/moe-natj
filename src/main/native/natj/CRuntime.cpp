@@ -911,9 +911,9 @@ void processStructureFunctions(JNIEnv* env, jclass type) {
           const char* libCPathFallback = env->GetStringUTFChars(libPathFallback, NULL);
 #ifdef _WIN32
           // TODO: We should support Unicode paths.
-          libHandle = LoadLibraryA(libCPath);
+          libHandle = LoadLibraryA(libCPathFallback);
 #else
-          libHandle = dlopen(libCPath, RTLD_LAZY);
+          libHandle = dlopen(libCPathFallback, RTLD_LAZY);
 #endif
           env->ReleaseStringUTFChars(libPathFallback, libCPathFallback);
           env->DeleteLocalRef(libPathFallback);
