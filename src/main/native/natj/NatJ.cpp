@@ -125,6 +125,7 @@ jmethodID gGetParameterTypesMethod = NULL;
 jmethodID gGetMethodNameMethod = NULL;
 jmethodID gGetLibraryMethod = NULL;
 jmethodID gLookUpLibraryStaticMethod = NULL;
+jmethodID gFallbackFrameworkStaticMethod = NULL;
 jmethodID gGetMethodDeclaringClassMethod = NULL;
 jmethodID gToNativeStaticMethod = NULL;
 jmethodID gToJavaStaticMethod = NULL;
@@ -358,6 +359,8 @@ void JNICALL Java_org_moe_natj_general_NatJ_initialize(JNIEnv* env, jclass clazz
       env->GetMethodID(gLibraryClass, "value", "()Ljava/lang/String;");
   gLookUpLibraryStaticMethod = env->GetStaticMethodID(
       gNatJClass, "lookUpLibrary", "(Ljava/lang/String;Z)Ljava/lang/String;");
+  gFallbackFrameworkStaticMethod = env->GetStaticMethodID(
+      gNatJClass, "getFallbackFramework", "(Ljava/lang/String;)Ljava/lang/String;");
   gGetReturnTypeMethod =
       env->GetMethodID(gMethodClass, "getReturnType", "()Ljava/lang/Class;");
   gGetParameterTypesMethod = env->GetMethodID(gMethodClass, "getParameterTypes",

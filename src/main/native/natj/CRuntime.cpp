@@ -889,7 +889,6 @@ void processStructureFunctions(JNIEnv* env, jclass type) {
     env->DeleteLocalRef(libAnn);
     jstring libPath = (jstring)env->CallStaticObjectMethod(
         gNatJClass, gLookUpLibraryStaticMethod, libName, false);
-    env->DeleteLocalRef(libName);
     if (env->IsSameObject(libPath, NULL)) {
       libHandle = thisHandle;
     } else {
@@ -902,6 +901,24 @@ void processStructureFunctions(JNIEnv* env, jclass type) {
 #endif
       env->ReleaseStringUTFChars(libPath, libCPath);
       env->DeleteLocalRef(libPath);
+      if (libHandle == NULL) {
+          jobject fallbackFramework = env->CallStaticObjectMethod(gNatJClass, gFallbackFrameworkStaticMethod, libName);
+
+          jstring libPathFallback = (jstring)env->CallStaticObjectMethod(
+              gNatJClass, gLookUpLibraryStaticMethod, fallbackFramework, false);
+
+          env->DeleteLocalRef(fallbackFramework);
+          const char* libCPathFallback = env->GetStringUTFChars(libPathFallback, NULL);
+#ifdef _WIN32
+          // TODO: We should support Unicode paths.
+          libHandle = LoadLibraryA(libCPath);
+#else
+          libHandle = dlopen(libCPath, RTLD_LAZY);
+#endif
+          env->ReleaseStringUTFChars(libPathFallback, libCPathFallback);
+          env->DeleteLocalRef(libPathFallback);
+      }
+      env->DeleteLocalRef(libName);
     }
   } else {
     libHandle = thisHandle;

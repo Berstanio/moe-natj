@@ -510,6 +510,7 @@ extern jmethodID gGetParameterTypesMethod;
 extern jmethodID gGetMethodNameMethod;
 extern jmethodID gGetLibraryMethod;
 extern jmethodID gLookUpLibraryStaticMethod;
+extern jmethodID gFallbackFrameworkStaticMethod;
 extern jmethodID gGetMethodDeclaringClassMethod;
 extern jmethodID gGetStructFieldOrderMethod;
 extern jmethodID gGetStructFieldIsGetterMethod;

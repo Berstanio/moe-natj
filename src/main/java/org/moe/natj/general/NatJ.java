@@ -230,6 +230,10 @@ public class NatJ {
         }
     }
 
+    private static String getFallbackFramework(String failedFramework) {
+        return frameworkFallbackMap.get(failedFramework);
+    }
+
     /**
      * Registers a class with its determined runtime.
      *
@@ -275,8 +279,9 @@ public class NatJ {
                      * If a framework got renamed, we add fallback code to support older iOS versions.
                      *  E.g. AVFAudio falls back to AVFoundation
                      * */
-                    if (frameworkFallbackMap.containsKey(lann.value())) {
-                        lookUpLibrary(frameworkFallbackMap.get(lann.value()), true);
+                    String fallback = getFallbackFramework(lann.value());
+                    if (fallback != null) {
+                        lookUpLibrary(fallback, true);
                     } else {
                         throw e;
                     }
