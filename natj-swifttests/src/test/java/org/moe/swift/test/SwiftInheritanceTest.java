@@ -36,8 +36,8 @@ public class SwiftInheritanceTest extends BaseSwiftTest {
     @Test
     public void testImplicitUpcasting() {
         BaseClass baseClass = SubClass.getSubClassAsBaseClass();
-        assertNotEquals(BaseClass.getType(), SwiftRuntime.getTypeOfPointer(baseClass.getPeerPointer()));
-        assertEquals(SubClass.getType(), SwiftRuntime.getTypeOfPointer(baseClass.getPeerPointer()));
+        assertNotEquals(BaseClass.getType(), SwiftRuntime.dereferencePeer(baseClass.getPeerPointer()));
+        assertEquals(SubClass.getType(), SwiftRuntime.dereferencePeer(baseClass.getPeerPointer()));
         assertEquals(SubClass.class, baseClass.getClass());
     }
 }

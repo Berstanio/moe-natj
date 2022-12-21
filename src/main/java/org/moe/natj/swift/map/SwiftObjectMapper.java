@@ -6,6 +6,7 @@ import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeObject;
 import org.moe.natj.general.Pointer;
 import org.moe.natj.swift.SwiftRuntime;
+import org.moe.natj.swift.ann.SwiftProtocol;
 
 import java.lang.reflect.Constructor;
 
@@ -25,10 +26,16 @@ public class SwiftObjectMapper implements Mapper {
             Constructor<?> constructor;
             synchronized (info) {
                 Class<?> classForInstance = null;
-                if (!StructObject.class.isAssignableFrom(info.type)) {
+                boolean isProtocolReturn = info.type.isAnnotationPresent(SwiftProtocol.class);
+                if (isProtocolReturn) {
+                    classForInstance = SwiftRuntime.getClassForPeer(SwiftRuntime.dereferencePeer(instance));
+                    pointer.setPeer(SwiftRuntime.dereferencePeer(instance));
+                    if (classForInstance == null) throw new RuntimeException("No binding found for protocol, currently unsupported");
+                } else if (!StructObject.class.isAssignableFrom(info.type)) {
                     classForInstance = SwiftRuntime.getClassForPeer(instance);
                 }
                 if (classForInstance != null) {
+                    // TODO: 07.12.22 Only with getConstructor? To improve inheritance?
                     constructor = classForInstance.getDeclaredConstructor(Pointer.class);
                     constructor.setAccessible(true);
                 } else if (info.data == null) {

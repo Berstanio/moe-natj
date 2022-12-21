@@ -14,7 +14,7 @@ jmethodID gSwiftMethodOffsetMethod = NULL;
 
 jobject getSwiftRuntime() { return gRuntime; }
 
-void* getTypeOfPointer(void** peer) {
+void* dereferencePeer(void** peer) {
     return *peer;
 }
 
@@ -100,7 +100,8 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
 
         jobject returnByValueAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gByValueClass);
         jclass returnJava = (jclass)env->CallObjectMethod(method, gGetReturnTypeMethod);
-        ffi_type* returnFFI = getFFIType(env, returnJava, returnByValueAnnotation != NULL);
+        ffi_type* returnFFI = getFFIType(env, returnJava, false);
+        ffi_type* returnFFISwift = getFFIType(env, returnJava, returnByValueAnnotation != NULL);
 
         ToNativeCallInfo* info = new ToNativeCallInfo;
         info->method = env->NewGlobalRef(method);
@@ -109,7 +110,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         info->cached = false;
         info->isStatic = isStatic;
         info->offset = offset;
-        ffi_prep_cif(&info->cif, FFI_DEFAULT_ABI, parameterCount + !isStatic, returnFFI, parametersSwift);
+        ffi_prep_cif(&info->cif, FFI_DEFAULT_ABI, parameterCount + !isStatic, returnFFISwift, parametersSwift);
 
         jobject swiftConstructorAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftConstructor);
         // SOLVE BETTER

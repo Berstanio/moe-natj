@@ -100,6 +100,7 @@ jclass gByValueVariadicArgClass = NULL;
 jclass gNativeRuntimeClass = NULL;
 #ifdef __APPLE__
 jclass gObjCObjectPtrImplClass = NULL;
+jclass gSwiftProtocolAnnotationClass = NULL;
 #endif
 
 jmethodID gIsAnnotationPresentMethod = NULL;
@@ -172,6 +173,8 @@ jmethodID gRefreshRetainListMethod = NULL;
 jbyte gRuntimeVariadicPolicyValue = -1;
 jbyte gBoxVariadicPolicyValue = -1;
 jbyte gUnboxVariadicPolicyValue = -1;
+
+ffi_type* existentialContainer = NULL;
 
 #if !__NATJ_IS_64BIT__
 ffi_type ffi_type_nfloat = {alignof(float), sizeof(float), FFI_TYPE_FLOAT,
@@ -555,6 +558,19 @@ void JNICALL Java_org_moe_natj_general_NatJ_initialize(JNIEnv* env, jclass clazz
 #ifdef __APPLE__
   gObjCObjectPtrImplClass = (jclass)env->NewGlobalRef(
       env->FindClass("org/moe/natj/general/ptr/impl/ObjCObjectPtrImpl"));
+    gSwiftProtocolAnnotationClass = (jclass) env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftProtocol"));
+    
+    ffi_type* ret = new ffi_type;
+    ret->type = FFI_TYPE_STRUCT;
+    ret->alignment = 1;
+    ret->size = ffi_type_uint64.size * 5;
+    ffi_type** fields = new ffi_type*[6];
+    for (int i = 0; i < 5; i++) {
+        fields[i] = &ffi_type_uint64;
+    }
+    fields[5] = NULL;
+    ret->elements = fields;
+    existentialContainer = ret;
 #endif
 
   env->PopLocalFrame(NULL);
@@ -753,6 +769,9 @@ ffi_type* getFFIType(JNIEnv* env, jclass type, jboolean byValue,
 }
 
 ffi_type* getCachedFFIType(JNIEnv* env, jclass type) {
+    bool isSwiftProtocol = env->CallObjectMethod(type, gGetAnnotationMethod, gSwiftProtocolAnnotationClass) != NULL;
+    if (isSwiftProtocol) return existentialContainer;
+    
   if (!env->IsAssignableFrom(type, gNativeObjectClass)) {
     jstring className =
         (jstring)env->CallObjectMethod(type, gGetClassNameMethod);
