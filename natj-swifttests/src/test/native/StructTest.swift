@@ -34,10 +34,6 @@ public struct TestBigStruct {
     public func getStructNumber2() -> Int {
         return field4
     }
-
-    public func alterField() {
-        field4 = 17
-    }
 }
 
 public func testFuncBig(_ par1: TestBigStruct, _ par2: Int) -> Int {
