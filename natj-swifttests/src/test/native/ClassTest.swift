@@ -15,26 +15,3 @@ public class Vehicle {
         return currentSpeed + par1
     }
 }
-
-public func test2(_ par1: Vehicle, _ par2: Int) {
-    print("My speed is: \(par1.currentSpeed) and par \(par2)")
-}
-
-
-
-public func pleeeaseWork() -> Vehicle {
-    print("OMG I WORKED")
-    let v: Vehicle = Vehicle()
-    v.currentSpeed = 100
-    print(Unmanaged<Vehicle>.passRetained(v).toOpaque())
-    return v
-}
-
-public func funcWithMoreParam(par1: Int, par2: Int) {
-    print("Got called global \(par1) and \(par2)")
-}
-//print(test(1).currentSpeed)
-//print(MemoryLayout<Vehicle>.size)
-//let tes = Vehicle()
-//let tes2 = Vehicle()
-//print(type(of: tes) == type(of: tes2))
