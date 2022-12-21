@@ -30,7 +30,7 @@ public class BaseClass extends NativeObject {
     }
 
     @StaticSwiftMethod(symbol = "$s9swiftTest9BaseClassCMa")
-    private static native long getType();
+    public static native long getType();
 
     @SwiftConstructor
     @StaticSwiftMethod(symbol = "$s9swiftTest9BaseClassCACycfC")

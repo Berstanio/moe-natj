@@ -7,8 +7,14 @@ import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
 import org.moe.natj.swift.map.SwiftObjectMapper;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+
 @Runtime(SwiftRuntime.class)
 public class SwiftRuntime extends NativeRuntime {
+
+    private static HashMap<Long, Class<?>> typeClassMap = new HashMap<>();
 
     static {
         NatJ.registerRuntime(SwiftRuntime.class);
@@ -37,7 +43,29 @@ public class SwiftRuntime extends NativeRuntime {
     @Override
     protected void doRegistration(Class<?> type) {
         registerClass(type);
+        try {
+            // TODO: 07.12.22 Solve better. Maybe a SwiftClass annotation? Or a SwiftMetadataType anno?
+            Method method = type.getDeclaredMethod("getType");
+            method.setAccessible(true);
+            Long peer = (Long) method.invoke(null);
+            typeClassMap.put(peer, type);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            System.err.println("No getType for " + type.getName());
+        }
     }
+
+    public static Class<?> getClassForPeer(long peer) {
+        // TODO: 07.12.22 Traverse super classes too
+        Class<?> foundClass = typeClassMap.get(getTypeOfPointer(peer));
+        if (foundClass == null) {
+            System.err.printf("No class found for 0x%08X%n", peer);
+        }
+        return foundClass;
+    }
+
+    // TODO: 07.12.22 Weeeell, this is silly, since it isn't a swift method... But since the conventions are so similar, it works
+    @StaticSwiftMethod(symbol = "getTypeOfPointer")
+    public static native long getTypeOfPointer(long peer);
 
     @StaticSwiftMethod(symbol = "swift_retain")
     public static native void retain(long peer);

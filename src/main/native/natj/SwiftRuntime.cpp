@@ -13,6 +13,10 @@ jmethodID gSwiftMethodOffsetMethod = NULL;
 
 jobject getSwiftRuntime() { return gRuntime; }
 
+void* getTypeOfPointer(void** peer) {
+    return *peer;
+}
+
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass clazz, jobject instance) {
     gRuntime = env->NewGlobalRef(instance);
 

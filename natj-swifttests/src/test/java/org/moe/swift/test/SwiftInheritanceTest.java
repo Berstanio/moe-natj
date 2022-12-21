@@ -3,6 +3,7 @@ package org.moe.swift.test;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.moe.natj.swift.SwiftRuntime;
 import org.moe.swift.test.bindings.BaseClass;
 import org.moe.swift.test.bindings.SubClass;
 
@@ -30,5 +31,13 @@ public class SwiftInheritanceTest extends BaseSwiftTest {
         assertEquals(2, baseClass.getClassSpecificNumber());
         BaseClass realBaseClass = new BaseClass();
         assertEquals(1, realBaseClass.getClassSpecificNumber());
+    }
+
+    @Test
+    public void testImplicitUpcasting() {
+        BaseClass baseClass = SubClass.getSubClassAsBaseClass();
+        assertNotEquals(BaseClass.getType(), SwiftRuntime.getTypeOfPointer(baseClass.getPeerPointer()));
+        assertEquals(SubClass.getType(), SwiftRuntime.getTypeOfPointer(baseClass.getPeerPointer()));
+        assertEquals(SubClass.class, baseClass.getClass());
     }
 }

@@ -30,7 +30,7 @@ public class SubClass extends BaseClass {
     }
 
     @StaticSwiftMethod(symbol = "$s9swiftTest8SubClassCMa")
-    private static native long getType();
+    public static native long getType();
 
     @SwiftConstructor
     @StaticSwiftMethod(symbol = "$s9swiftTest8SubClassCACycfC")
@@ -38,4 +38,7 @@ public class SubClass extends BaseClass {
 
     @VirtualSwiftMethod(offset = 168)
     public native int onlySubClass();
+
+    @StaticSwiftMethod(symbol = "$s9swiftTest8SubClassC03getcd6AsBaseD0AA0gD0CyFZ")
+    public static native BaseClass getSubClassAsBaseClass();
 }

@@ -25,4 +25,8 @@ public class SubClass : BaseClass {
     public override func getClassSpecificNumber() -> Int {
         return 2
     }
+
+    public static func getSubClassAsBaseClass() -> BaseClass {
+        return SubClass()
+    }
 }

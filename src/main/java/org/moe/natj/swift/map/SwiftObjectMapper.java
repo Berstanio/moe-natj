@@ -4,6 +4,7 @@ import org.moe.natj.general.Mapper;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeObject;
 import org.moe.natj.general.Pointer;
+import org.moe.natj.swift.SwiftRuntime;
 
 import java.lang.reflect.Constructor;
 
@@ -22,7 +23,11 @@ public class SwiftObjectMapper implements Mapper {
         try {
             Constructor<?> constructor;
             synchronized (info) {
-                if (info.data == null) {
+                Class<?> classForInstance = SwiftRuntime.getClassForPeer(instance);
+                if (classForInstance != null) {
+                    constructor = classForInstance.getDeclaredConstructor(Pointer.class);
+                    constructor.setAccessible(true);
+                } else if (info.data == null) {
                     constructor = info.type.getDeclaredConstructor(Pointer.class);
                     constructor.setAccessible(true);
                     info.data = constructor;
