@@ -55,7 +55,7 @@ public struct TestBigStruct {
 }
 
 public func testFuncBig(_ par1: TestBigStruct, _ par2: Int) -> Int {
-    return par1.field3 + par2
+    return par1.field4 + par2
 }
 
 public func testFuncMedium(_ par1: TestBigStruct, _ par2: Int) -> Int {
