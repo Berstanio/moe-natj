@@ -21,7 +21,7 @@ void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user) {
                 if (info->swiftFunction) {
                     if (!info->isStatic && info->isStruct) {
                         void* structPointer = values[0];
-                        memmove(&(values[0]), &(values[1]), (info->cif.nargs - 1) * sizeof(void*));
+                        memmove(values, &values[1], (info->cif.nargs - 1) * sizeof(void*));
                         values[info->cif.nargs - 1] = structPointer;
                         
                         // Caching rewritten cif?
