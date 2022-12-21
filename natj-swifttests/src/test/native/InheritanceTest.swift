@@ -30,3 +30,14 @@ public class SubClass : BaseClass {
         return SubClass()
     }
 }
+
+public class UnknownSubClass : SubClass {
+
+    public override func getClassSpecificNumber() -> Int {
+        return 3
+    }
+}
+
+public func getUnknownSubClassAsBaseClass() -> BaseClass {
+    return UnknownSubClass()
+}

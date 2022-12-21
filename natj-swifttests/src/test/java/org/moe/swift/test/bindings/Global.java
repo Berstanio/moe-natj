@@ -27,4 +27,7 @@ public class Global {
     @StaticSwiftMethod(symbol = "$s9swiftTest04boolB0yS2bF")
     public static native boolean boolTest(boolean b);
 
+    @StaticSwiftMethod(symbol = "$s9swiftTest024getUnknownSubClassAsBaseF0AA0hF0CyF")
+    public static native BaseClass getUnknownSubClassAsBaseClass();
+
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.swift.test.bindings.BaseClass;
+import org.moe.swift.test.bindings.Global;
 import org.moe.swift.test.bindings.SubClass;
 
 public class SwiftInheritanceTest extends BaseSwiftTest {
@@ -39,5 +40,14 @@ public class SwiftInheritanceTest extends BaseSwiftTest {
         assertNotEquals(BaseClass.getType(), SwiftRuntime.dereferencePeer(baseClass.getPeerPointer()));
         assertEquals(SubClass.getType(), SwiftRuntime.dereferencePeer(baseClass.getPeerPointer()));
         assertEquals(SubClass.class, baseClass.getClass());
+    }
+
+    @Test
+    public void testIncompleteImplicitUpcasting() {
+        BaseClass baseClass = Global.getUnknownSubClassAsBaseClass();
+        assertNotEquals(BaseClass.getType(), SwiftRuntime.dereferencePeer(baseClass.getPeerPointer()));
+        assertNotEquals(SubClass.getType(), SwiftRuntime.dereferencePeer(baseClass.getPeerPointer()));
+        assertEquals(SubClass.class, baseClass.getClass());
+        assertEquals(3, baseClass.getClassSpecificNumber());
     }
 }
