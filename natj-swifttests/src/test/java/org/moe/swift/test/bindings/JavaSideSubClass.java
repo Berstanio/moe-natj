@@ -14,6 +14,8 @@ public class JavaSideSubClass extends BaseClass {
         NatJ.register();
     }
 
+    public long testValue = 42;
+
     public JavaSideSubClass(Pointer peer) {
         super(peer);
     }
@@ -25,10 +27,13 @@ public class JavaSideSubClass extends BaseClass {
 
     @Override
     @VirtualSwiftMethod(offset = 88)
-    public int getClassSpecificNumber() {
-        return 42;
+    public long getClassSpecificNumber() {
+        return testValue;
     }
 
     @StaticSwiftMethod(symbol = "$s9swiftTest28globalGetClassSpecificNumberySiAA04BaseE0CF")
     public static native long getClassNumberGlobal(BaseClass baseClass);
+
+    @StaticSwiftMethod(symbol = "$s9swiftTest26globalReturnBaseClassAgainyAA0eF0CADF")
+    public static native BaseClass returnBaseClassAgain(BaseClass baseClass);
 }

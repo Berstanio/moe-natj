@@ -40,9 +40,9 @@ public class BaseClass extends NativeObject {
     private static native long constructor(long type);
 
     @VirtualSwiftMethod(offset = 88)
-    public native int getClassSpecificNumber();
+    public native long getClassSpecificNumber();
 
     @VirtualSwiftMethod(offset = 96)
-    public native int getBaseClassField();
+    public native long getBaseClassField();
 
 }

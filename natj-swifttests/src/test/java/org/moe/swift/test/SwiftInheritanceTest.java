@@ -62,4 +62,28 @@ public class SwiftInheritanceTest extends BaseSwiftTest {
         // TODO: 19.12.22 Implement tests to ensure, that java class is correctly rematched to swift class
         // TODO: 19.12.22 Implement tests, to ensure that binding class always recreate a new class
     }
+
+    @Test
+    public void testJavaSideSubClassKeepsValue() {
+        JavaSideSubClass javaSideSubClass = new JavaSideSubClass();
+        assertEquals(42, JavaSideSubClass.getClassNumberGlobal(javaSideSubClass));
+        JavaSideSubClass javaSideSubClass2 = (JavaSideSubClass) JavaSideSubClass.returnBaseClassAgain(javaSideSubClass);
+        assertEquals(javaSideSubClass, javaSideSubClass2);
+        assertEquals(42, JavaSideSubClass.getClassNumberGlobal(javaSideSubClass2));
+        javaSideSubClass.testValue = 55;
+        javaSideSubClass2 = (JavaSideSubClass) JavaSideSubClass.returnBaseClassAgain(javaSideSubClass);
+        assertEquals(55, JavaSideSubClass.getClassNumberGlobal(javaSideSubClass));
+        assertEquals(55, JavaSideSubClass.getClassNumberGlobal(javaSideSubClass2));
+    }
+
+    @Test
+    public void testBindingClassNotConsistent() {
+        BaseClass b1 = new BaseClass();
+        BaseClass b2 = JavaSideSubClass.returnBaseClassAgain(b1);
+        BaseClass b3 = JavaSideSubClass.returnBaseClassAgain(b2);
+        BaseClass b4 = JavaSideSubClass.returnBaseClassAgain(b3);
+        assertNotEquals(b1, b2);
+        assertNotEquals(b2, b3);
+        assertNotEquals(b3, b4);
+    }
 }

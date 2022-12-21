@@ -45,3 +45,7 @@ public func getUnknownSubClassAsBaseClass() -> BaseClass {
 public func globalGetClassSpecificNumber(_ par1: BaseClass) -> Int {
     return par1.getClassSpecificNumber()
 }
+
+public func globalReturnBaseClassAgain(_ par1: BaseClass) -> BaseClass {
+    return par1
+}

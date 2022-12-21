@@ -10,13 +10,17 @@ import org.moe.natj.general.ptr.LongPtr;
 import org.moe.natj.general.ptr.impl.PtrFactory;
 import org.moe.natj.swift.ProtocolProxyHandler;
 import org.moe.natj.swift.SwiftRuntime;
+import org.moe.natj.swift.ann.SwiftBindingClass;
 import org.moe.natj.swift.ann.SwiftProtocol;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
 
 public class SwiftObjectMapper implements Mapper {
+
+    private HashMap<Long, Object> inheritedObjectMap = new HashMap<>();
 
     private long wrapObjectInEC(Object instance, Class<?> type) {
         long peer = ((NativeObject) instance).getPeer().getPeer();
@@ -65,6 +69,14 @@ public class SwiftObjectMapper implements Mapper {
         if (info.packWithEC) {
             return wrapObjectInEC(instance, (Class<?>) info.data);
         }
+
+        boolean isInherited = !isStruct(instance.getClass()) && !instance.getClass().isAnnotationPresent(SwiftBindingClass.class);
+
+        // TODO: 20.12.22 DEFINITLY SOLVE BETTER!!!
+        if (isInherited) {
+            inheritedObjectMap.putIfAbsent(((NativeObject) instance).getPeer().getPeer(), instance);
+        }
+
         // TODO: 13.12.22 For now it seems like, we can pass structs just by reference. Since swift functions can't just alter it,
         //  at least code doing that wouldn't compile. How the "mutating" keyword works will be needed to investigated later
         return ((NativeObject) instance).getPeer().getPeer();
@@ -76,18 +88,27 @@ public class SwiftObjectMapper implements Mapper {
 
     public Object constructJavaObjectWithConstructor(long instance, Class<?> toInstantiate, NatJ.JavaObjectConstructionInfo info) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Constructor<?> constructor;
-        if (toInstantiate != null) {
-            // TODO: 07.12.22 Only with getConstructor? To improve inheritance?
-            constructor = toInstantiate.getDeclaredConstructor(Pointer.class);
-            constructor.setAccessible(true);
-        } else if (info.data == null) {
-            constructor = info.type.getDeclaredConstructor(Pointer.class);
-            constructor.setAccessible(true);
-            info.data = constructor;
+
+        // TODO: 07.12.22 Only with getConstructor? To improve inheritance?
+        // TODO: 20.12.22 Add caching?
+        constructor = toInstantiate.getDeclaredConstructor(Pointer.class);
+        constructor.setAccessible(true);
+
+        boolean isInherited = !isStruct(toInstantiate) && !toInstantiate.isAnnotationPresent(SwiftBindingClass.class);
+        Object javaObject;
+        if (isInherited) {
+            javaObject = inheritedObjectMap.computeIfAbsent(instance, (peer) -> {
+                try {
+                    return constructor.newInstance(new Pointer(peer));
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } else {
-            constructor = ((Constructor<?>) info.data);
+             javaObject = constructor.newInstance(new Pointer(instance));
         }
-        return constructor.newInstance(new Pointer(instance));
+
+        return javaObject;
     }
 
     public Object constructJavaObjectForProxy(long instance, NatJ.JavaObjectConstructionInfo info) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
