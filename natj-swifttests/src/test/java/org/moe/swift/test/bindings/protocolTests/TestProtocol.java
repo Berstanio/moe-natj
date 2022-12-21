@@ -6,7 +6,7 @@ import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.SwiftProtocol;
 import org.moe.natj.swift.ann.VirtualSwiftMethod;
 
-@SwiftProtocol
+@SwiftProtocol(protocolDescriptor = "$s9swiftTest0B8ProtocolMp")
 @Runtime(SwiftRuntime.class)
 public interface TestProtocol {
 

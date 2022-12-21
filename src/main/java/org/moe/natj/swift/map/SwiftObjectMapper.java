@@ -5,6 +5,8 @@ import org.moe.natj.general.Mapper;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeObject;
 import org.moe.natj.general.Pointer;
+import org.moe.natj.general.ptr.LongPtr;
+import org.moe.natj.general.ptr.impl.PtrFactory;
 import org.moe.natj.swift.ProtocolProxyHandler;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.SwiftProtocol;
@@ -14,6 +16,22 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 
 public class SwiftObjectMapper implements Mapper {
+
+    private long wrapObjectInEC(Object instance, Class<?> type) {
+        if (isStruct(instance.getClass())) {
+
+        } else {
+            long peer = ((NativeObject) instance).getPeer().getPeer();
+            long metadata = SwiftRuntime.getMetadataForClass(instance.getClass());
+            long protocolWitnessTable = SwiftRuntime.getProtocolWitnessTable(metadata, type);
+            long[] ec = new long[] {peer, 0, 0, metadata, protocolWitnessTable};
+            LongPtr ptr = PtrFactory.newLongArray(ec);
+            // TODO: 10.12.22 Also, who is supposed to handle freeing? IDK!
+            return ptr.getPeer().getPeer();
+        }
+        return 0;
+    }
+
     @Override
     public long toNative(Object instance, NatJ.NativeObjectConstructionInfo info) {
         if (instance == null) {
@@ -25,7 +43,9 @@ public class SwiftObjectMapper implements Mapper {
             return protocolProxy.getPeer();
         }
 
-        // TODO: 09.12.22 Pack in EC if protocol parameter
+        if (info.packWithEC) {
+            return wrapObjectInEC(instance, (Class<?>) info.data);
+        }
 
         return ((NativeObject) instance).getPeer().getPeer();
     }
@@ -58,6 +78,7 @@ public class SwiftObjectMapper implements Mapper {
         if (classForInstance == null) return ProtocolProxyHandler.createProtocolProxy(instance, info.type);
         instance = SwiftRuntime.dereferencePeer(instance);
         // TODO: 08.12.22 For structs the EC doesn't directly point to the struct. So we need a small offset
+        // TODO: 10.12.22 Also support smaller structs
         if (isStruct(classForInstance)) instance += 16;
 
         return constructJavaObjectWithConstructor(instance, classForInstance, info);

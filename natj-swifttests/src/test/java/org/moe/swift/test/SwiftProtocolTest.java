@@ -43,4 +43,12 @@ public class SwiftProtocolTest extends BaseSwiftTest {
         assertTrue(Proxy.isProxyClass(testProtocol.getClass()));
         assertEquals(7, Global.passBackUnknownProtocol(testProtocol));
     }
+
+    @Test
+    public void testProtocolPassKnownClassBinding() {
+        TestProtocol testProtocol = ClassConformingProtocol.getClassAsProtocol();
+        assertEquals(ClassConformingProtocol.class, testProtocol.getClass());
+        assertEquals(3, testProtocol.protoFunc());
+        assertEquals(3, Global.passBackUnknownProtocol(testProtocol));
+    }
 }

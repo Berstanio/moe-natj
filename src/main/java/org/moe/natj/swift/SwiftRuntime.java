@@ -15,6 +15,10 @@ import java.util.HashMap;
 public class SwiftRuntime extends NativeRuntime {
 
     private static HashMap<Long, Class<?>> typeClassMap = new HashMap<>();
+    private static HashMap<Class<?>, Long> classTypeMap = new HashMap<>();
+
+    private static HashMap<Class<?>, Long> classProtocolDescriptorMap = new HashMap<>();
+    private static HashMap<Long, HashMap<Class<?>, Long>> typeToClassWitnessTableMapMap = new HashMap<>();
 
     static {
         NatJ.registerRuntime(SwiftRuntime.class);
@@ -49,9 +53,14 @@ public class SwiftRuntime extends NativeRuntime {
             method.setAccessible(true);
             Long peer = (Long) method.invoke(null);
             typeClassMap.put(peer, type);
+            classTypeMap.put(type, peer);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             System.err.println("No getType for " + type.getName());
         }
+    }
+
+    public static long getMetadataForClass(Class<?> aClass) {
+        return classTypeMap.get(aClass);
     }
 
     public static Class<?> getClassForMetadataPointer(long peer) {
@@ -73,6 +82,15 @@ public class SwiftRuntime extends NativeRuntime {
         return foundClass;
     }
 
+    public static void registerProtocolClass(Class<?> type, long protocolDescriptor) {
+        classProtocolDescriptorMap.put(type, protocolDescriptor);
+    }
+
+    public static long getProtocolWitnessTable(long metadata, Class<?> type) {
+        HashMap<Class<?>, Long> classToWitnessTable = typeToClassWitnessTableMapMap.computeIfAbsent(metadata, k -> new HashMap<>());
+        return classToWitnessTable.computeIfAbsent(type, k -> fetchWitnessTable(metadata, classProtocolDescriptorMap.get(k)));
+    }
+
     // TODO: 07.12.22 Weeeell, this is silly, since it isn't a swift method... But since the conventions are so similar, it works
     @StaticSwiftMethod(symbol = "dereferencePeer")
     public static native long dereferencePeer(long peer);
@@ -85,6 +103,9 @@ public class SwiftRuntime extends NativeRuntime {
 
     @StaticSwiftMethod(symbol = "$ss12_autoreleaseyyyXlF")
     public static native void autorelease(long peer);
+
+    @StaticSwiftMethod(symbol = "swift_conformsToProtocol")
+    public static native long fetchWitnessTable(long metadata, long descriptor);
 
     public static native boolean forwardBooleanProtocolCall(Class<?> protocolClass, Method method, Object[] args);
     public static native byte forwardByteProtocolCall(Class<?> protocolClass, Method method, Object[] args);

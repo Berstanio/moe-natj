@@ -5,13 +5,17 @@
 
 static jobject gRuntime = NULL;
 
+jclass gSwiftRuntimeClass = NULL;
+
 jclass gSwiftStaticMethod = NULL;
 jclass gSwiftConstructor = NULL;
 jclass gSwiftVirtualMethod = NULL;
 
 jmethodID gSwiftMethodSymbolMethod = NULL;
+jmethodID gSwiftProtocolDescriptorMethod = NULL;
 
 jmethodID gSwiftMethodOffsetMethod = NULL;
+jmethodID gSwiftRuntimeRegisterProtocol = NULL;
 
 jobject getSwiftRuntime() { return gRuntime; }
 
@@ -75,7 +79,9 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_forwardVoidProtocolCall(JNIEnv
 
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass clazz, jobject instance) {
     gRuntime = env->NewGlobalRef(instance);
-
+    gSwiftRuntimeClass = (jclass)env->NewGlobalRef(clazz);
+    gSwiftRuntimeRegisterProtocol = env->GetStaticMethodID(gSwiftRuntimeClass, "registerProtocolClass", "(Ljava/lang/Class;J)V");
+    gSwiftProtocolDescriptorMethod = env->GetMethodID(gSwiftProtocolAnnotationClass, "protocolDescriptor", "()Ljava/lang/String;");
     env->PushLocalFrame(2);
 
     gSwiftStaticMethod = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/StaticSwiftMethod"));
@@ -94,9 +100,20 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
     jsize length = env->GetArrayLength(methods);
     
     bool isStructure = env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gStructureClass);
-    bool isProtocolClass = env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gSwiftProtocolAnnotationClass);
+    jobject protocolClassAnnotation = env->CallObjectMethod(type, gGetAnnotationMethod, gSwiftProtocolAnnotationClass);
+    bool isProtocolClass = protocolClassAnnotation != NULL;
     if (isStructure) {
         Java_org_moe_natj_c_CRuntime_registerClass(env, clazz, type);
+    }
+    
+    if (isProtocolClass) {
+        jstring symbolString = (jstring)env->CallObjectMethod(protocolClassAnnotation, gSwiftProtocolDescriptorMethod);
+        const char* symbolName = env->GetStringUTFChars(symbolString, NULL);
+        void* witnessTable = dlsym(RTLD_DEFAULT, symbolName);
+        if (witnessTable == NULL) {
+            std::cout << "Symbol " << symbolName << " not found!" << std::endl;
+        }
+        env->CallStaticVoidMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterProtocol, type, (jlong)witnessTable);
     }
 
     for (size_t i = 0; i < length; i++) {
@@ -188,7 +205,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
             // We don't need a closure here, so early exit
             jmethodID methodAsID = getMethodIDFromMethod(env, type, method);
             (*protocolMap)[methodAsID] = info;
-            return;
+            continue;
         }
         
         ffi_cif* closureCif = new ffi_cif;

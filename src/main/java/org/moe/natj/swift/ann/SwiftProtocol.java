@@ -8,4 +8,6 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SwiftProtocol {
+
+    String protocolDescriptor();
 }

@@ -22,6 +22,7 @@ import org.moe.natj.general.ann.Library;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.general.map.ReferenceMapper;
 import org.moe.natj.general.ptr.ConstVoidPtr;
+import org.moe.natj.swift.ann.SwiftProtocol;
 
 import java.io.File;
 import java.io.IOException;
@@ -974,6 +975,11 @@ public class NatJ {
         /** Specifies whether this is a conversion for a reference. */
         public boolean ref;
 
+        /**
+         * Indicates for swift, whether it is a protocol parameter
+         */
+        public boolean packWithEC = false;
+
         /** User data for custom use. */
         public Object data;
 
@@ -1139,6 +1145,10 @@ public class NatJ {
             info.mapper = getReferenceMapper();
         } else {
             info.ref = false;
+            if (type.isAnnotationPresent(SwiftProtocol.class)) {
+                info.packWithEC = true;
+                info.data = type;
+            }
             if (mapperClass == null) {
                 if (callback != null) {
                     NativeRuntime runtime = getRuntime(callback.annotationType(), true);
