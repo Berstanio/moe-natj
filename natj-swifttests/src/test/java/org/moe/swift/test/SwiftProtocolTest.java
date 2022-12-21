@@ -35,14 +35,13 @@ public class SwiftProtocolTest extends BaseSwiftTest {
     public void testProtocolReturnKnownSmallStructBinding() {
         TestProtocol testProtocol = SmallStructConformingProtocol.getSmallStructAsProtocol();
         assertEquals(SmallStructConformingProtocol.class, testProtocol.getClass());
-        // TODO: 11.12.22 Properly implement struct parameter arguments, 1. that the arg comes last and 2. byvalue
-//        assertEquals(11, testProtocol.protoFunc());
+        assertEquals(11, testProtocol.protoFunc());
         SmallStructConformingProtocol smallStructConformingProtocol = (SmallStructConformingProtocol) testProtocol;
         assertEquals(10, smallStructConformingProtocol.getField());
         assertEquals(11, smallStructConformingProtocol.getField2());
         smallStructConformingProtocol.setField2(22);
         assertEquals(22, smallStructConformingProtocol.getField2());
-        //assertEquals(22, testProtocol.protoFunc());
+        assertEquals(22, testProtocol.protoFunc());
     }
 
     @Test
@@ -79,7 +78,7 @@ public class SwiftProtocolTest extends BaseSwiftTest {
     public void testProtocolPassKnownSmallStructBinding() {
         TestProtocol testProtocol = SmallStructConformingProtocol.getSmallStructAsProtocol();
         assertEquals(SmallStructConformingProtocol.class, testProtocol.getClass());
-        //assertEquals(2, testProtocol.protoFunc());
+        assertEquals(11, testProtocol.protoFunc());
         assertEquals(11, Global.passBackUnknownProtocol(testProtocol));
     }
 
