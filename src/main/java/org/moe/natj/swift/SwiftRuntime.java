@@ -86,4 +86,14 @@ public class SwiftRuntime extends NativeRuntime {
     @StaticSwiftMethod(symbol = "$ss12_autoreleaseyyyXlF")
     public static native void autorelease(long peer);
 
+    public static native boolean forwardBooleanProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native byte forwardByteProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native char forwardCharProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native short forwardShortProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native int forwardIntProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native long forwardLongProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native float forwardFloatProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native double forwardDoubleProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native Object forwardObjectProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+    public static native void forwardVoidProtocolCall(Class<?> protocolClass, Method method, Object[] args);
 }

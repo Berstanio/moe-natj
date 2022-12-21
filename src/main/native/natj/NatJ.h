@@ -503,6 +503,7 @@ extern jclass gNativeRuntimeClass;
 #ifdef __APPLE__
 extern jclass gObjCObjectClass;  // Defined by Objective-C Runtime.
 extern jclass gObjCObjectPtrImplClass;
+extern jclass gSwiftProtocolAnnotationClass;
 #endif
 
 
@@ -1047,4 +1048,5 @@ jobject getWeakReference(JNIEnv* env, uint64_t reference);
  */
 void natj_printJavaStackTrace(JNIEnv* env);
 
+jmethodID getMethodIDFromMethod(JNIEnv* env, jclass enclosingClass, jobject method);
 #endif

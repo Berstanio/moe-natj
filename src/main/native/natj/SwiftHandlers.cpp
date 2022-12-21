@@ -21,8 +21,15 @@ void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user) {
                 if (info->swiftFunction) {
                     ffi_call(&info->cif, (void (*)())info->swiftFunction, value, values);
                 } else {
-                    uint64_t metadata = ***(uint64_t***)values;
-                    void* function = *(void**)(metadata + info->offset);
+                    void* function;
+                    if (info->isProtocol) {
+                        uint64_t ec = **(uint64_t**) values;
+                        uint64_t pwt = *(uint64_t*)(ec + 32);
+                        function = *(void**)(pwt + info->offset);
+                    } else {
+                        uint64_t metadata = ***(uint64_t***)values;
+                        function = *(void**)(metadata + info->offset);
+                    }
                     ffi_call(&info->cif, (void (*)())function, value, values);
                 }
             } else {

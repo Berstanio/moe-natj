@@ -22,6 +22,8 @@ struct ToNativeCallInfo {
     ffi_cif cif;
 
     bool isStatic;
+    
+    bool isProtocol;
 
     /** Info needed for variadic methods */
     int8_t variadic;

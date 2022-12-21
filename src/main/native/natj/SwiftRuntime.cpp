@@ -1,6 +1,7 @@
 #include "SwiftRuntime.h"
 #include "SwiftHandlers.h"
 #include "CRuntime.h"
+#include <unordered_map>
 
 static jobject gRuntime = NULL;
 
@@ -14,9 +15,63 @@ jmethodID gSwiftMethodOffsetMethod = NULL;
 
 jobject getSwiftRuntime() { return gRuntime; }
 
+std::unordered_map<jmethodID, ToNativeCallInfo*>* protocolMap = NULL;
+
 void* dereferencePeer(void** peer) {
     return *peer;
 }
+
+#define TYPED_PROTOCOL_CALL_FORWARDER(type, name, type_ffi)                                               \
+  type Java_org_moe_natj_swift_SwiftRuntime_forward##name##ProtocolCall(JNIEnv* env, jclass clazz, jclass protocolClass, jobject method, jobjectArray args) {                   \
+    ffi_cif cif; \
+    jsize length = env->GetArrayLength(args) + 1; \
+    void* arg_values[length]; \
+    jobject objects[length - 1]; \
+    for (jsize i = 0; i < length - 1; i++) { \
+        objects[i] = env->GetObjectArrayElement(args, i); \
+    } \
+    for (jsize i = 1; i < length; i++) { \
+        arg_values[i] = &objects[i - 1]; \
+    } \
+    arg_values[0] = &env; \
+    type result; \
+    ToNativeCallInfo* info = (*protocolMap)[getMethodIDFromMethod(env, protocolClass, method)]; \
+    cif.rtype = &type_ffi; \
+    javaToSwiftHandler(&cif, &result, (void**)&arg_values, (void*)info); \
+    return result;                                                                              \
+  }
+
+TYPED_PROTOCOL_CALL_FORWARDER(jboolean, Boolean, ffi_type_uint8)
+TYPED_PROTOCOL_CALL_FORWARDER(jbyte, Byte, ffi_type_sint8)
+TYPED_PROTOCOL_CALL_FORWARDER(jchar, Char, ffi_type_uint16)
+TYPED_PROTOCOL_CALL_FORWARDER(jshort, Short, ffi_type_sint16)
+TYPED_PROTOCOL_CALL_FORWARDER(jint, Int, ffi_type_sint32)
+TYPED_PROTOCOL_CALL_FORWARDER(jlong, Long, ffi_type_sint64)
+TYPED_PROTOCOL_CALL_FORWARDER(jfloat, Float, ffi_type_float)
+TYPED_PROTOCOL_CALL_FORWARDER(jdouble, Double, ffi_type_double)
+TYPED_PROTOCOL_CALL_FORWARDER(jobject, Object, ffi_type_pointer)
+
+#undef TYPED_BLOCK_CALL_FORWARDER
+
+void JNICALL Java_org_moe_natj_swift_SwiftRuntime_forwardVoidProtocolCall(JNIEnv* env, jclass clazz, jclass protocolClass, jobject method, jobjectArray args) {
+    ffi_cif cif;
+    jsize length = env->GetArrayLength(args) + 1;
+    void* arg_values[length];
+    jobject objects[length - 1];
+    for (jsize i = 0; i < length - 1; i++) {
+        objects[i] = env->GetObjectArrayElement(args, i);
+    }
+    for (jsize i = 1; i < length; i++) {
+        arg_values[i] = &objects[i - 1];
+    }
+    arg_values[0] = &env;
+
+    ToNativeCallInfo* info = (*protocolMap)[getMethodIDFromMethod(env, protocolClass, method)];
+    cif.rtype = &ffi_type_void;
+    javaToSwiftHandler(&cif, NULL, (void**)&arg_values, (void*)info);
+}
+
+
 
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass clazz, jobject instance) {
     gRuntime = env->NewGlobalRef(instance);
@@ -31,6 +86,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
     gSwiftMethodSymbolMethod = env->GetMethodID(gSwiftStaticMethod, "symbol", "()Ljava/lang/String;");
     gSwiftMethodOffsetMethod = env->GetMethodID(gSwiftVirtualMethod, "offset", "()J");
     env->PopLocalFrame(NULL);
+    protocolMap = new std::unordered_map<jmethodID, ToNativeCallInfo*>();
 }
 
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type) {
@@ -38,6 +94,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
     jsize length = env->GetArrayLength(methods);
     
     bool isStructure = env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gStructureClass);
+    bool isProtocolClass = env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gSwiftProtocolAnnotationClass);
     if (isStructure) {
         Java_org_moe_natj_c_CRuntime_registerClass(env, clazz, type);
     }
@@ -100,6 +157,12 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
 
         jobject returnByValueAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gByValueClass);
         jclass returnJava = (jclass)env->CallObjectMethod(method, gGetReturnTypeMethod);
+        bool isProtocolReturn = env->CallBooleanMethod(returnJava, gIsAnnotationPresentMethod, gSwiftProtocolAnnotationClass);
+        
+        if (isProtocolReturn) {
+            // We register a class that can return a plain protocol. It can be, that it returns something, we don't have bindings for. Therefor we need to register the protocol class now too
+            Java_org_moe_natj_swift_SwiftRuntime_registerClass(env, clazz, returnJava);
+        }
         ffi_type* returnFFI = getFFIType(env, returnJava, false);
         ffi_type* returnFFISwift = getFFIType(env, returnJava, returnByValueAnnotation != NULL);
 
@@ -110,6 +173,8 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         info->cached = false;
         info->isStatic = isStatic;
         info->offset = offset;
+        info->isProtocol = isProtocolClass;
+        
         ffi_prep_cif(&info->cif, FFI_DEFAULT_ABI, parameterCount + !isStatic, returnFFISwift, parametersSwift);
 
         jobject swiftConstructorAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftConstructor);
@@ -118,7 +183,14 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
             // Hack, to support x20 registers
             info->cif.flags = info->cif.flags | 256;
         }
-
+        
+        if (isProtocolClass) {
+            // We don't need a closure here, so early exit
+            jmethodID methodAsID = getMethodIDFromMethod(env, type, method);
+            (*protocolMap)[methodAsID] = info;
+            return;
+        }
+        
         ffi_cif* closureCif = new ffi_cif;
         void* code = NULL;
         ffi_closure* closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &code);

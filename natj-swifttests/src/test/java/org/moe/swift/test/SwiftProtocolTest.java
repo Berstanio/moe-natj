@@ -34,12 +34,13 @@ public class SwiftProtocolTest extends BaseSwiftTest {
     public void testProtocolReturnUnknownBinding() {
         TestProtocol testProtocol = Global.getUnknownProtocolClass();
         assertTrue(Proxy.isProxyClass(testProtocol.getClass()));
+        assertEquals(7, testProtocol.protoFunc());
     }
 
     @Test
     public void testProtocolPassUnknownBinding() {
         TestProtocol testProtocol = Global.getUnknownProtocolClass();
         assertTrue(Proxy.isProxyClass(testProtocol.getClass()));
-        assertEquals(5, Global.passBackUnknownProtocol(testProtocol));
+        assertEquals(7, Global.passBackUnknownProtocol(testProtocol));
     }
 }

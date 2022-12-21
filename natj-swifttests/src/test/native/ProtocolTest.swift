@@ -14,8 +14,10 @@ public class ClassConformingProtocol : TestProtocol {
 }
 
 public class UnknownClassConformingProtocol : TestProtocol {
+
+    public var fff: Int = 7
     public func protoFunc() -> Int {
-        return 5
+        return fff
     }
 }
 
