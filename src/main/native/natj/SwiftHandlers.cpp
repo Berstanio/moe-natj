@@ -25,8 +25,8 @@ void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user) {
                         values[info->cif.nargs - 1] = structPointer;
                         
                         // Caching rewritten cif?
-                        ffi_cif rewritten_cif;
-                        memcpy(&rewritten_cif, &info->cif, sizeof(ffi_cif));
+                        ffi_cif rewritten_cif = info->cif;
+                        //memcpy(&rewritten_cif, &info->cif, sizeof(ffi_cif));
                         ffi_type** args_old = info->cif.arg_types;
 
                         ffi_type* args_new[info->cif.nargs];
