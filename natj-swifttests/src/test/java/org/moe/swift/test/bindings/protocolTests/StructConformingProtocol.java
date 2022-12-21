@@ -48,6 +48,13 @@ public class StructConformingProtocol extends StructObject implements TestProtoc
     @StructureField(order = 3, isGetter = false)
     public native void setField4(long field);
 
+    @StructureField(order = 4, isGetter = true)
+    public native long getField5();
+
+    @StructureField(order = 4, isGetter = false)
+    public native void setField5(long field);
+
+
     @StaticSwiftMethod(symbol = "$s9swiftTest24StructConformingProtocolVMa")
     public static native long getType();
     @Override

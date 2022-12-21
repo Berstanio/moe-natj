@@ -24,7 +24,7 @@ public class SwiftProtocolTest extends BaseSwiftTest {
     public void testProtocolReturnKnownLargeStructBinding() {
         TestProtocol testProtocol = StructConformingProtocol.getStructAsProtocol();
         assertEquals(StructConformingProtocol.class, testProtocol.getClass());
-        //assertEquals(2, testProtocol.protoFunc());
+        assertEquals(2, testProtocol.protoFunc());
         StructConformingProtocol structConformingProtocol = (StructConformingProtocol) testProtocol;
         assertEquals(11, structConformingProtocol.getField2());
         structConformingProtocol.setField3(22);
@@ -70,7 +70,7 @@ public class SwiftProtocolTest extends BaseSwiftTest {
     public void testProtocolPassKnownStructBinding() {
         TestProtocol testProtocol = StructConformingProtocol.getStructAsProtocol();
         assertEquals(StructConformingProtocol.class, testProtocol.getClass());
-        //assertEquals(2, testProtocol.protoFunc());
+        assertEquals(2, testProtocol.protoFunc());
         assertEquals(2, Global.passBackUnknownProtocol(testProtocol));
     }
 
