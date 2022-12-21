@@ -21,6 +21,8 @@ test {
 def swiftFiles = ["ClassTest.swift", "GlobalTest.swift", "InheritanceTest.swift"]
 
 task compileSwift(type: Exec) {
+    inputs.dir(file("src/test/native/"))
+    outputs.dir(file("$buildDir/swift/"))
     doFirst {
         mkdir "$buildDir/swift/"
     }
