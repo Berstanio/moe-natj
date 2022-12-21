@@ -9,7 +9,21 @@ import org.moe.swift.test.bindings.SubClass;
 public class SwiftInheritanceTest extends BaseSwiftTest {
 
     @Test
-    public void test() {
+    public void testOnlySubclass() {
+        SubClass subClass = new SubClass();
+        assertEquals(5, subClass.onlySubClass());
+    }
+
+    @Test
+    public void testOnlyBaseclass() {
+        SubClass subClass = new SubClass();
+        assertEquals(6, subClass.getBaseClassField());
+        BaseClass baseClass = new BaseClass();
+        assertEquals(6, baseClass.getBaseClassField());
+    }
+
+    @Test
+    public void testOverride() {
         SubClass subClass = new SubClass();
         assertEquals(2, subClass.getClassSpecificNumber());
         BaseClass baseClass = new BaseClass(subClass.getPeer());

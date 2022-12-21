@@ -18,10 +18,6 @@ public class SubClass : BaseClass {
 
     public var anotherField: Int = 5
 
-    public override init() {
-
-    }
-
     public func onlySubClass() -> Int {
         return anotherField
     }

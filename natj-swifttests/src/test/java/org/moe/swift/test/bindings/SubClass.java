@@ -7,6 +7,7 @@ import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.SwiftConstructor;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
+import org.moe.natj.swift.ann.VirtualSwiftMethod;
 
 @Runtime(SwiftRuntime.class)
 public class SubClass extends BaseClass {
@@ -34,4 +35,7 @@ public class SubClass extends BaseClass {
     @SwiftConstructor
     @StaticSwiftMethod(symbol = "$s9swiftTest8SubClassCACycfC")
     private static native long constructor(long type);
+
+    @VirtualSwiftMethod(offset = 168)
+    public native int onlySubClass();
 }
