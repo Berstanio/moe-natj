@@ -295,7 +295,7 @@ public class CRuntime extends NativeRuntime {
      * @param size the size to allocate
      * @return The pointer
      */
-    private static native long malloc(long size);
+    public static native long malloc(long size);
 
     /**
      * Method for using C free function from java.

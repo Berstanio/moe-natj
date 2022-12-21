@@ -1,5 +1,6 @@
 package org.moe.natj.swift.map;
 
+import org.moe.natj.c.CRuntime;
 import org.moe.natj.c.StructObject;
 import org.moe.natj.general.Mapper;
 import org.moe.natj.general.NatJ;
@@ -18,18 +19,36 @@ import java.lang.reflect.Proxy;
 public class SwiftObjectMapper implements Mapper {
 
     private long wrapObjectInEC(Object instance, Class<?> type) {
+        long peer = ((NativeObject) instance).getPeer().getPeer();
+        long metadata;
+        boolean copyStruct = false;
+        long size = 0;
         if (isStruct(instance.getClass())) {
-
+            metadata = SwiftRuntime.getMetadataForClass(instance.getClass());
+            size = CRuntime.sizeOfNativeObject((Class<? extends NativeObject>) instance.getClass());
+            if (size <= 24) {
+                copyStruct = true;
+            } else {
+                long newPeer = CRuntime.malloc(size + 16);
+                // TODO: 11.12.22 Shouldn't it be a long as size?
+                CRuntime.memcpy(newPeer + 16, peer, (int)size);
+                // TODO: 11.12.22 We need to fill the 16 bytes with useful information
+                peer = newPeer;
+            }
         } else {
-            long peer = ((NativeObject) instance).getPeer().getPeer();
-            long metadata = SwiftRuntime.getMetadataForClass(instance.getClass());
-            long protocolWitnessTable = SwiftRuntime.getProtocolWitnessTable(metadata, type);
-            long[] ec = new long[] {peer, 0, 0, metadata, protocolWitnessTable};
-            LongPtr ptr = PtrFactory.newLongArray(ec);
-            // TODO: 10.12.22 Also, who is supposed to handle freeing? IDK!
-            return ptr.getPeer().getPeer();
+            metadata = SwiftRuntime.dereferencePeer(peer);
         }
-        return 0;
+
+        long protocolWitnessTable = SwiftRuntime.getProtocolWitnessTable(metadata, type);
+        long[] ec = new long[] {peer, 0, 0, metadata, protocolWitnessTable};
+        LongPtr ptr = PtrFactory.newLongArray(ec);
+
+        if (copyStruct) {
+            CRuntime.memcpy(ptr.getPeer().getPeer(), peer, (int)size);
+        }
+
+        // TODO: 10.12.22 Also, who is supposed to handle freeing? IDK!
+        return ptr.getPeer().getPeer();
     }
 
     @Override
@@ -76,10 +95,21 @@ public class SwiftObjectMapper implements Mapper {
         long metadataPointer = SwiftRuntime.dereferencePeer(instance + 24);
         Class<?> classForInstance = SwiftRuntime.getClassForMetadataPointer(metadataPointer);
         if (classForInstance == null) return ProtocolProxyHandler.createProtocolProxy(instance, info.type);
-        instance = SwiftRuntime.dereferencePeer(instance);
+
         // TODO: 08.12.22 For structs the EC doesn't directly point to the struct. So we need a small offset
-        // TODO: 10.12.22 Also support smaller structs
-        if (isStruct(classForInstance)) instance += 16;
+        if (isStruct(classForInstance)) {
+            long size = CRuntime.sizeOfNativeObject((Class<? extends NativeObject>) classForInstance);
+            if (size > 24) {
+                instance = SwiftRuntime.dereferencePeer(instance);
+                instance += 16;
+            } else {
+                long struct = CRuntime.malloc(size);
+                CRuntime.memcpy(struct, instance, (int) size);
+                instance = struct;
+            }
+        } else {
+            instance = SwiftRuntime.dereferencePeer(instance);
+        }
 
         return constructJavaObjectWithConstructor(instance, classForInstance, info);
     }

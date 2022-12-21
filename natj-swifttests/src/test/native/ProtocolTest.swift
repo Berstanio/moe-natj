@@ -26,10 +26,10 @@ public struct StructConformingProtocol : TestProtocol {
     public var fieeeld: Int = 10
     public var fieeeld2: Int = 11
     public var fieeeld3: Int = 12
-    public var fieeeld4: Int = 13
+    public var fieeeld4: Int = 2
 
     public func protoFunc() -> Int {
-        return 2
+        return fieeeld4
     }
 }
 
@@ -39,7 +39,7 @@ public struct SmallStructConformingProtocol : TestProtocol {
     public var fieeeld2: Int = 11
 
     public func protoFunc() -> Int {
-        return 4
+        return fieeeld2
     }
 }
 
