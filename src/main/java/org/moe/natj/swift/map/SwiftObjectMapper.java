@@ -65,7 +65,8 @@ public class SwiftObjectMapper implements Mapper {
         if (info.packWithEC) {
             return wrapObjectInEC(instance, (Class<?>) info.data);
         }
-
+        // TODO: 13.12.22 For now it seems like, we can pass structs just by reference. Since swift functions can't just alter it,
+        //  at least code doing that wouldn't compile. How the "mutating" keyword works will be needed to investigated later
         return ((NativeObject) instance).getPeer().getPeer();
     }
 

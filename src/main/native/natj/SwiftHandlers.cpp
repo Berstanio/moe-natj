@@ -19,7 +19,7 @@ void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user) {
         [value, info](unsigned n, ffi_type** types, void** values) {
             if (info->variadic == kNotVariadic) {
                 if (info->swiftFunction) {
-                    if (!info->isStatic && info->isStruct) {
+                    if (info->needsStructRewrite) {
                         void* structPointer = values[0];
                         memmove(values, &values[1], (info->cif.nargs - 1) * sizeof(void*));
                         values[info->cif.nargs - 1] = structPointer;

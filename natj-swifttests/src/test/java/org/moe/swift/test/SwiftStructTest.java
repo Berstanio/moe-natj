@@ -2,6 +2,7 @@ package org.moe.swift.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+import org.moe.swift.test.bindings.TestBigStruct;
 import org.moe.swift.test.bindings.TestStruct;
 
 public class SwiftStructTest extends BaseSwiftTest {
@@ -34,5 +35,14 @@ public class SwiftStructTest extends BaseSwiftTest {
         long randomField = struct.getRandomField();
         assertEquals(7, randomField);
         assertEquals(randomField, struct.getStructNumber());
+    }
+
+    @Test
+    public void testBigStruct() {
+        TestBigStruct testBigStruct = new TestBigStruct();
+        assertEquals(4, testBigStruct.getField4());
+        assertEquals(5, TestBigStruct.structTest(testBigStruct, 1));
+        assertEquals(5, testBigStruct.getStructNumber(1));
+        assertEquals(4, testBigStruct.getStructNumber());
     }
 }

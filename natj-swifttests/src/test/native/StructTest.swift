@@ -16,6 +16,34 @@ public struct TestStruct {
     }
 }
 
+public struct TestBigStruct {
+    public var field1: Int = 1
+    public var field2: Int = 2
+    public var field3: Int = 3
+    public var field4: Int = 4
+    public var field5: Int = 5
+
+    public init() {
+
+    }
+
+    public func getStructNumber(_ par1: Int) -> Int {
+        return field4 + par1
+    }
+
+    public func getStructNumber2() -> Int {
+        return field4
+    }
+
+    public func alterField() {
+        field4 = 17
+    }
+}
+
+public func testFuncBig(_ par1: TestBigStruct, _ par2: Int) -> Int {
+    return par1.getStructNumber(par2)
+}
+
 public func testFunc(_ par1: TestStruct, _ par2: Int) -> Int {
     return par1.field + par2
 }

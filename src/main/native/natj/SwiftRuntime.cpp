@@ -146,9 +146,12 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         bool isStatic = modifiers & ACC_STATIC;
 
         ffi_type** parametersSwift = new ffi_type*[parameterCount + !isStatic];
+        
+        bool needsStructRewrite = false;
 
         if (!isStatic) {
             parametersSwift[0] = getFFIType(env, type, isStructure);
+            needsStructRewrite = isStructure && parametersSwift[0]->size <= 24;
         }
 
         ffi_type** parametersFFI = new ffi_type*[parameterCount + 2];
@@ -191,13 +194,13 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         info->isStatic = isStatic;
         info->offset = offset;
         info->isProtocol = isProtocolClass;
-        info->isStruct = isStructure;
+        info->needsStructRewrite = needsStructRewrite;
         
         ffi_prep_cif(&info->cif, FFI_DEFAULT_ABI, parameterCount + !isStatic, returnFFISwift, parametersSwift);
 
         jobject swiftConstructorAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftConstructor);
         // SOLVE BETTER
-        if ((!isStatic && !isStructure) || swiftConstructorAnnotation) {
+        if ((!isStatic && !needsStructRewrite) || swiftConstructorAnnotation) {
             // Hack, to support x20 registers
             info->cif.flags = info->cif.flags | 256;
         }

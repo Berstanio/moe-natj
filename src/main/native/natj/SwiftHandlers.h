@@ -25,7 +25,7 @@ struct ToNativeCallInfo {
     
     bool isProtocol;
     
-    bool isStruct;
+    bool needsStructRewrite;
 
     /** Info needed for variadic methods */
     int8_t variadic;
