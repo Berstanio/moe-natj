@@ -54,6 +54,9 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
 
         jobjectArray parametersJava = (jobjectArray)env->CallObjectMethod(method, gGetParameterTypesMethod);
         jsize parameterCount = env->GetArrayLength(parametersJava);
+        
+        jobjectArray parameterAnns = (jobjectArray)env->CallObjectMethod(method, gGetParameterAnnotationsMethod);
+
 
         jint modifiers = env->CallIntMethod(method, gGetModifiersMethod);
         bool isStatic = modifiers & ACC_STATIC;
@@ -64,20 +67,30 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
             parametersSwift[0] = &ffi_type_pointer;
         }
 
-        // ffi_type** parametersSwift = new ffi_type*[parameterCount];
         ffi_type** parametersFFI = new ffi_type*[parameterCount + 2];
         parametersFFI[0] = &ffi_type_pointer;
         parametersFFI[1] = &ffi_type_pointer;
-        // parametersFFI[2] = &ffi_type_pointer;
 
-        for (size_t i = 0; i < parameterCount; i++) {
+        for (jsize i = 0; i < parameterCount; i++) {
             jclass parameterJava = (jclass)env->GetObjectArrayElement(parametersJava, i);
+            jobjectArray paramAnns = (jobjectArray)env->GetObjectArrayElement(parameterAnns, i);
+            jsize annCount = env->GetArrayLength(paramAnns);
+            
+            bool isByValue = false;
+            for (jsize j = 0; j < annCount; j++) {
+                jclass paramAnn = (jclass)env->GetObjectArrayElement(paramAnns, j);
+                if (env->IsInstanceOf(paramAnn, gByValueClass)) {
+                    isByValue = true;
+                }
+            }
+
             parametersFFI[i + 2] = getFFIType(env, parameterJava, false);
-            parametersSwift[i + !isStatic] = getFFIType(env, parameterJava, false);
+            parametersSwift[i + !isStatic] = getFFIType(env, parameterJava, isByValue);
         }
 
+        jobject returnByValueAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gByValueClass);
         jclass returnJava = (jclass)env->CallObjectMethod(method, gGetReturnTypeMethod);
-        ffi_type* returnFFI = getFFIType(env, returnJava, false);
+        ffi_type* returnFFI = getFFIType(env, returnJava, returnByValueAnnotation != NULL);
 
         ToNativeCallInfo* info = new ToNativeCallInfo;
         info->method = env->NewGlobalRef(method);

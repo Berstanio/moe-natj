@@ -18,7 +18,7 @@ test {
     useJUnitPlatform()
 }
 
-def swiftFiles = ["ClassTest.swift", "GlobalTest.swift", "InheritanceTest.swift"]
+def swiftFiles = ["ClassTest.swift", "GlobalTest.swift", "InheritanceTest.swift", "StructTest.swift"]
 
 task compileSwift(type: Exec) {
     inputs.dir(file("src/test/native/"))
