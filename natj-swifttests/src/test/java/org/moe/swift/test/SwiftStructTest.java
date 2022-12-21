@@ -3,6 +3,7 @@ package org.moe.swift.test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.moe.swift.test.bindings.TestBigStruct;
+import org.moe.swift.test.bindings.TestMediumStruct;
 import org.moe.swift.test.bindings.TestStruct;
 
 public class SwiftStructTest extends BaseSwiftTest {
@@ -44,5 +45,14 @@ public class SwiftStructTest extends BaseSwiftTest {
         assertEquals(5, TestBigStruct.structTest(testBigStruct, 1));
         assertEquals(5, testBigStruct.getStructNumber(1));
         assertEquals(4, testBigStruct.getStructNumber());
+    }
+
+    @Test
+    public void testMediumStruct() {
+        TestMediumStruct testMediumStruct = new TestMediumStruct();
+        assertEquals(3, testMediumStruct.getField3());
+        assertEquals(4, TestMediumStruct.structTest(testMediumStruct, 1));
+        assertEquals(4, testMediumStruct.getStructNumber(1));
+        assertEquals(3, testMediumStruct.getStructNumber());
     }
 }
