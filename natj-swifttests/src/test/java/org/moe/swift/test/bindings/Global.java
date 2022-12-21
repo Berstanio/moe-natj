@@ -1,9 +1,11 @@
 package org.moe.swift.test.bindings;
 
 import org.moe.natj.general.NatJ;
+import org.moe.natj.general.ann.ByValue;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
+import org.moe.swift.test.bindings.protocolTests.TestProtocol;
 
 @Runtime(SwiftRuntime.class)
 public class Global {
@@ -30,4 +32,10 @@ public class Global {
     @StaticSwiftMethod(symbol = "$s9swiftTest024getUnknownSubClassAsBaseF0AA0hF0CyF")
     public static native BaseClass getUnknownSubClassAsBaseClass();
 
+    @StaticSwiftMethod(symbol = "$s9swiftTest25getUnknownClassAsProtocolAA0bG0_pyF")
+    @ByValue
+    public static native TestProtocol getUnknownProtocolClass();
+
+    @StaticSwiftMethod(symbol = "$s9swiftTest23passBackUnknownProtocolySiAA0bF0_pF")
+    public static native long passBackUnknownProtocol(@ByValue TestProtocol protocol);
 }

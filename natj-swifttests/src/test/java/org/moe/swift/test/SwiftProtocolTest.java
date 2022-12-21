@@ -1,9 +1,13 @@
 package org.moe.swift.test;
 
 import org.junit.jupiter.api.Test;
+import org.moe.swift.test.bindings.Global;
 import org.moe.swift.test.bindings.protocolTests.ClassConformingProtocol;
 import org.moe.swift.test.bindings.protocolTests.StructConformingProtocol;
 import org.moe.swift.test.bindings.protocolTests.TestProtocol;
+
+import java.lang.reflect.Proxy;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SwiftProtocolTest extends BaseSwiftTest {
@@ -24,5 +28,18 @@ public class SwiftProtocolTest extends BaseSwiftTest {
         assertEquals(11, structConformingProtocol.getField2());
         structConformingProtocol.setField3(22);
         assertEquals(22, structConformingProtocol.getField3());
+    }
+
+    @Test
+    public void testProtocolReturnUnknownBinding() {
+        TestProtocol testProtocol = Global.getUnknownProtocolClass();
+        assertTrue(Proxy.isProxyClass(testProtocol.getClass()));
+    }
+
+    @Test
+    public void testProtocolPassUnknownBinding() {
+        TestProtocol testProtocol = Global.getUnknownProtocolClass();
+        assertTrue(Proxy.isProxyClass(testProtocol.getClass()));
+        assertEquals(5, Global.passBackUnknownProtocol(testProtocol));
     }
 }
