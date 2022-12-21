@@ -203,6 +203,7 @@
 		F0595A282936D1D000939712 /* SwiftHandlers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0595A262936D1D000939712 /* SwiftHandlers.cpp */; };
 		F0595A2B2936D20700939712 /* SwiftHandlers.h in Headers */ = {isa = PBXBuildFile; fileRef = F0595A292936D20700939712 /* SwiftHandlers.h */; };
 		F0595A2C2936D20700939712 /* SwiftRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = F0595A2A2936D20700939712 /* SwiftRuntime.h */; };
+		F0C83E6F294E1654002C5254 /* SwiftNatJGlobal.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C83E6E294E1654002C5254 /* SwiftNatJGlobal.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -437,6 +438,7 @@
 		F0595A262936D1D000939712 /* SwiftHandlers.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SwiftHandlers.cpp; sourceTree = "<group>"; };
 		F0595A292936D20700939712 /* SwiftHandlers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftHandlers.h; sourceTree = "<group>"; };
 		F0595A2A2936D20700939712 /* SwiftRuntime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftRuntime.h; sourceTree = "<group>"; };
+		F0C83E6E294E1654002C5254 /* SwiftNatJGlobal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftNatJGlobal.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -763,6 +765,7 @@
 				408CBFA01B57E77C00E5E6F5 /* ObjCProperties.mm */,
 				23E37DE617CE772500844AD6 /* ObjCRuntime.h */,
 				23E37DE717CE772500844AD6 /* ObjCRuntime.mm */,
+				F0C83E6E294E1654002C5254 /* SwiftNatJGlobal.swift */,
 			);
 			name = natj;
 			path = ../src/main/native/natj;
@@ -1175,6 +1178,9 @@
 					1E0345821B5E83D500DB0D19 = {
 						CreatedOnToolsVersion = 6.4;
 					};
+					23E37DB417CE76B400844AD6 = {
+						LastSwiftMigration = 1420;
+					};
 					580616BA1C6C8E12001967D5 = {
 						CreatedOnToolsVersion = 7.2;
 					};
@@ -1268,6 +1274,7 @@
 				23E37DFC17CE772500844AD6 /* ObjCInstanceContainer.mm in Sources */,
 				408CBFA21B57E77C00E5E6F5 /* ObjCProperties.mm in Sources */,
 				23E37DFE17CE772500844AD6 /* ObjCRuntime.mm in Sources */,
+				F0C83E6F294E1654002C5254 /* SwiftNatJGlobal.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1515,32 +1522,39 @@
 		23E37DC517CE76B400844AD6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "\"$(MOE_PREBUILTS_DIR)/external/libffi/build/macos/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/include\"";
 				LD_DYLIB_INSTALL_NAME = "@rpath/libnatj.dylib";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "\"$(MOE_PREBUILTS_DIR)/external/libffi/build/macos/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MOE_PREBUILTS_DIR = "$(SRCROOT)/../../../../prebuilts";
 				OTHER_LDFLAGS = "-lffi";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
 		23E37DC617CE76B400844AD6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = "\"$(MOE_PREBUILTS_DIR)/external/libffi/build/macos/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/include\"";
 				LD_DYLIB_INSTALL_NAME = "@rpath/libnatj.dylib";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "\"$(MOE_PREBUILTS_DIR)/external/libffi/build/macos/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MOE_PREBUILTS_DIR = "$(SRCROOT)/../../../../prebuilts";
 				OTHER_LDFLAGS = "-lffi";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};

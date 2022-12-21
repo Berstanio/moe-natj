@@ -37,4 +37,9 @@ public class SwiftGlobalTest extends BaseSwiftTest{
         assertFalse(Global.boolTest(true));
     }
 
+    @Test
+    public void testStringUTF8() {
+        assertEquals("Hey!", Global.stringTest("Hey"));
+        assertEquals("Hey123!", Global.stringTest("Hey123"));
+    }
 }

@@ -453,6 +453,7 @@ extern jclass gLongClass;
 extern jclass gFloatClass;
 extern jclass gDoubleClass;
 extern jclass gVoidClass;
+extern jclass gStringClass;
 extern jclass gBoxedBooleanClass;
 extern jclass gBoxedByteClass;
 extern jclass gBoxedCharClass;
@@ -504,6 +505,7 @@ extern jclass gNativeRuntimeClass;
 extern jclass gObjCObjectClass;  // Defined by Objective-C Runtime.
 extern jclass gObjCObjectPtrImplClass;
 extern jclass gSwiftProtocolAnnotationClass;
+extern ffi_type* swiftString;
 #endif
 
 

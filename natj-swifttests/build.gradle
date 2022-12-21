@@ -48,6 +48,25 @@ task getSymbols(type: Exec) {
     }
 }
 
+task getSymbolsNatJ(type: Exec) {
+    def output = new ByteArrayOutputStream()
+    dependsOn(rootProject.task("build_natj_Debug_macosx"))
+    commandLine "nm", "-g", "-C", "--defined-only", "$rootDir.absolutePath/natj-mac/build/xcode/Debug/libnatj.dylib"
+    standardOutput = output
+    doLast {
+        def outputString = output.toString()
+        def lines = outputString.split("\n")
+        def symbols = lines.findAll {
+            it.contains(" T _\$s")
+        }.stream().map {
+            it.split("T _")[1]
+        }.collect(Collectors.toList())
+        exec {
+            commandLine = ["swift", "demangle"] + symbols
+        }
+    }
+}
+
 task getOffsets() {
     dependsOn(compileSwift)
     doLast {

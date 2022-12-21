@@ -21,3 +21,7 @@ public func charTest(_ par1: Character) -> Character {
 public func boolTest(_ par1: Bool) -> Bool {
     return !par1
 }
+
+public func stringTest(_ par1: String) -> String {
+    return par1 + "!"
+}

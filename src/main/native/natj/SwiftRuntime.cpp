@@ -172,7 +172,9 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
             }
 
             parametersFFI[i + 2] = getFFIType(env, parameterJava, false);
-            parametersSwift[i + !isStatic] = getFFIType(env, parameterJava, isByValue);
+            ffi_type* parameterFFISwift = getFFIType(env, parameterJava, isByValue);
+            if(env->IsAssignableFrom(parameterJava, gStringClass)) parameterFFISwift = swiftString;
+            parametersSwift[i + !isStatic] = parameterFFISwift;
         }
 
         jobject returnByValueAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gByValueClass);
@@ -185,6 +187,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         }
         ffi_type* returnFFI = getFFIType(env, returnJava, false);
         ffi_type* returnFFISwift = getFFIType(env, returnJava, returnByValueAnnotation != NULL);
+        if(env->IsAssignableFrom(returnJava, gStringClass)) returnFFISwift = swiftString;
 
         ToNativeCallInfo* info = new ToNativeCallInfo;
         info->method = env->NewGlobalRef(method);

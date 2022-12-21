@@ -6,6 +6,7 @@ import org.moe.natj.general.NativeRuntime;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
 import org.moe.natj.swift.map.SwiftObjectMapper;
+import org.moe.natj.swift.map.SwiftStringMapper;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,7 +27,7 @@ public class SwiftRuntime extends NativeRuntime {
     }
 
     private SwiftRuntime() {
-        super(SwiftObjectMapper.class, null, null);
+        super(SwiftObjectMapper.class, SwiftStringMapper.class, null);
         initialize(this);
     }
 

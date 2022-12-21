@@ -53,6 +53,7 @@ jclass gLongClass = NULL;
 jclass gFloatClass = NULL;
 jclass gDoubleClass = NULL;
 jclass gVoidClass = NULL;
+jclass gStringClass = NULL;
 jclass gBoxedBooleanClass = NULL;
 jclass gBoxedByteClass = NULL;
 jclass gBoxedCharClass = NULL;
@@ -175,6 +176,7 @@ jbyte gBoxVariadicPolicyValue = -1;
 jbyte gUnboxVariadicPolicyValue = -1;
 
 ffi_type* existentialContainer = NULL;
+ffi_type* swiftString = NULL;
 
 #if !__NATJ_IS_64BIT__
 ffi_type ffi_type_nfloat = {alignof(float), sizeof(float), FFI_TYPE_FLOAT,
@@ -234,6 +236,7 @@ void JNICALL Java_org_moe_natj_general_NatJ_initialize(JNIEnv* env, jclass clazz
   gNatJClass = (jclass)env->NewGlobalRef(
       env->FindClass("org/moe/natj/general/NatJ"));
   gClassClass = (jclass)env->NewGlobalRef(env->FindClass("java/lang/Class"));
+  gStringClass = (jclass)env->NewGlobalRef(env->FindClass("java/lang/String"));
   gAsmTypeClass = (jclass)env->NewGlobalRef(
       env->FindClass("org/moe/natj/org/objectweb/asm/Type"));
   gByValueClass = (jclass)env->NewGlobalRef(
@@ -571,6 +574,18 @@ void JNICALL Java_org_moe_natj_general_NatJ_initialize(JNIEnv* env, jclass clazz
     fields[5] = NULL;
     ret->elements = fields;
     existentialContainer = ret;
+    
+    ffi_type* swiftType = new ffi_type;
+    swiftType->type = FFI_TYPE_STRUCT;
+    swiftType->alignment = 1;
+    swiftType->size = ffi_type_uint64.size * 2;
+    ffi_type** swiftStringFields = new ffi_type*[3];
+    for (int i = 0; i < 2; i++) {
+        swiftStringFields[i] = &ffi_type_uint64;
+    }
+    swiftStringFields[3] = NULL;
+    swiftType->elements = swiftStringFields;
+    swiftString = swiftType;
 #endif
 
   env->PopLocalFrame(NULL);
