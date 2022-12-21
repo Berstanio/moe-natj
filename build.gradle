@@ -41,6 +41,7 @@ spotless {
     format 'cpp', {
         // you have to set the target manually
         target 'src/main/native/natj/Swift*'
+        targetExclude 'src/main/native/natj/*.swift'
 
         // can also specify a code style
         clangFormat("15.0.6").style('file')

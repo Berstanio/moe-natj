@@ -22,9 +22,9 @@ struct ToNativeCallInfo {
     ffi_cif cif;
 
     bool isStatic;
-    
+
     bool isProtocol;
-    
+
     bool needsStructRewrite;
 
     /** Info needed for variadic methods */

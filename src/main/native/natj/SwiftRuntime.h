@@ -9,8 +9,8 @@ void* dereferencePeer(void** peer);
 /**
  * Macros for declaring forwarders for native protocol calls
  */
-#define TYPED_PROTOCOL_CALL_FORWARDER_IMPL(type, name)                           \
-JNIEXPORT type JNICALL Java_org_moe_natj_swift_SwiftRuntime_forward##name##ProtocolCall(JNIEnv* env, jclass clazz, jclass protocolClass, jobject method, jobjectArray args);
+#define TYPED_PROTOCOL_CALL_FORWARDER_IMPL(type, name) \
+    JNIEXPORT type JNICALL Java_org_moe_natj_swift_SwiftRuntime_forward##name##ProtocolCall(JNIEnv* env, jclass clazz, jclass protocolClass, jobject method, jobjectArray args);
 
 TYPED_PROTOCOL_CALL_FORWARDER_IMPL(jboolean, Boolean)
 TYPED_PROTOCOL_CALL_FORWARDER_IMPL(jbyte, Byte)
@@ -25,5 +25,4 @@ TYPED_PROTOCOL_CALL_FORWARDER_IMPL(jobject, Object)
 #undef TYPED_PROTOCOL_CALL_FORWARDER_IMPL
 
 JNIEXPORT void JNICALL Java_org_moe_natj_swift_SwiftRuntime_forwardVoidProtocolCall(JNIEnv* env, jclass clazz, jclass protocolClass, jobject method, jobjectArray args);
-
 }
