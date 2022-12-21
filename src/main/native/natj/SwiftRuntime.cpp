@@ -151,7 +151,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
 
         if (!isStatic) {
             parametersSwift[0] = getFFIType(env, type, isStructure);
-            needsStructRewrite = isStructure && parametersSwift[0]->size <= 24;
+            needsStructRewrite = isStructure && parametersSwift[0]->size <= 32;
         }
 
         ffi_type** parametersFFI = new ffi_type*[parameterCount + 2];
