@@ -796,10 +796,48 @@ void setCachedFFIType(JNIEnv* env, jclass type, ffi_type* cType) {
   env->SetStaticLongField(type, nativeTypeStaticField,
                           reinterpret_cast<jlong>(cType));
 }
+    
+jobject constructInfoForJClass(JNIEnv* env, jclass clazz, jobjectArray paramAnns, jobject runtime, bool toJava) {
+    jsize annCount = paramAnns == NULL ? 0 : env->GetArrayLength(paramAnns);
+    jobject mappedType = NULL;
+    jobject callable = NULL;
+    jboolean byValue = false;
+    jboolean owned = false;
+    jobject referenceInfo = NULL;
+    for (jsize j = 0; j < annCount; j++) {
+      jobject paramAnn = env->GetObjectArrayElement(paramAnns, j);
+      if (env->IsInstanceOf(paramAnn, gMappedClass)) {
+        mappedType = env->CallObjectMethod(paramAnn, gGetMappedMethod);
+      } else if (env->CallBooleanMethod(
+                     env->CallObjectMethod(paramAnn, gAnnotationTypeMethod),
+                     gIsAnnotationPresentMethod, gCallableClass)) {
+        callable = paramAnn;
+      } else if (!owned && env->IsInstanceOf(paramAnn, gOwnedClass)) {
+        owned = true;
+      } else if (env->IsInstanceOf(paramAnn, gByValueClass)) {
+        owned = true;  //@ByValue implicates @Owned
+        byValue = true;
+      } else if (toJava && env->IsInstanceOf(paramAnn, gReferenceInfoClass)) {
+        referenceInfo = paramAnn;
+      }
+      if (mappedType && callable && owned && byValue && (!toJava || referenceInfo)) {
+        break;
+      }
+    }
+    
+    if (toJava) {
+      return env->NewGlobalRef(env->CallStaticObjectMethod(
+          gNatJClass, gBuildJavaObjectInfoStaticMethod, runtime, clazz, mappedType, callable, referenceInfo, owned, byValue, true));
+    } else {
+      return env->NewGlobalRef(env->CallStaticObjectMethod(
+          gNatJClass, gBuildNativeObjectInfoStaticMethod, runtime, clazz, mappedType, callable, owned, byValue, true));
+    }
+
+}
 
 void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
                 jobject* returnInfo, int8_t* variadic, size_t* ptrBuff,
-                size_t* ptrCount) {
+                size_t* ptrCount, bool addCallerObject) {
   // Get default runtime
   jobject runtime = NULL;
   {
@@ -907,7 +945,11 @@ void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
     if (isVariadic) {
       parameterCount--;
     }
-    infos.reserve(parameterCount);
+    infos.reserve(parameterCount + addCallerObject);
+    if(addCallerObject) {
+        jclass cls = (jclass)env->CallObjectMethod(method, gGetMethodDeclaringClassMethod);
+        infos.push_back(constructInfoForJClass(env, cls, NULL, runtime, toJava));
+    }
     for (jsize i = 0; i < parameterCount; i++) {
       env->PushLocalFrame(20);
       jclass parameterType =
@@ -919,44 +961,8 @@ void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
           ptrBuff[(*ptrCount)++] = i;
         }
 #endif
-        jobjectArray paramAnns =
-            (jobjectArray)env->GetObjectArrayElement(parameterAnns, i);
-        jsize annCount = env->GetArrayLength(paramAnns);
-        jobject mappedType = NULL;
-        jobject callable = NULL;
-        jboolean byValue = false;
-        jboolean owned = false;
-        jobject referenceInfo = NULL;
-        for (jsize j = 0; j < annCount; j++) {
-          jobject paramAnn = env->GetObjectArrayElement(paramAnns, j);
-          if (env->IsInstanceOf(paramAnn, gMappedClass)) {
-            mappedType = env->CallObjectMethod(paramAnn, gGetMappedMethod);
-          } else if (env->CallBooleanMethod(
-                         env->CallObjectMethod(paramAnn, gAnnotationTypeMethod),
-                         gIsAnnotationPresentMethod, gCallableClass)) {
-            callable = paramAnn;
-          } else if (!owned && env->IsInstanceOf(paramAnn, gOwnedClass)) {
-            owned = true;
-          } else if (env->IsInstanceOf(paramAnn, gByValueClass)) {
-            owned = true;  //@ByValue implicates @Owned
-            byValue = true;
-          } else if (toJava && env->IsInstanceOf(paramAnn, gReferenceInfoClass)) {
-            referenceInfo = paramAnn;
-          }
-          if (mappedType && callable && owned && byValue && (!toJava || referenceInfo)) {
-            break;
-          }
-        }
-        if (toJava) {
-          infos.push_back(env->NewGlobalRef(env->CallStaticObjectMethod(
-              gNatJClass, gBuildJavaObjectInfoStaticMethod, runtime,
-              parameterType, mappedType, callable, referenceInfo, owned, byValue,
-              true)));
-        } else {
-          infos.push_back(env->NewGlobalRef(env->CallStaticObjectMethod(
-              gNatJClass, gBuildNativeObjectInfoStaticMethod, runtime,
-              parameterType, mappedType, callable, owned, byValue, true)));
-        }
+        jobjectArray paramAnns = (jobjectArray)env->GetObjectArrayElement(parameterAnns, i);
+        infos.push_back(constructInfoForJClass(env, parameterType, paramAnns, runtime, toJava));
       }
       env->PopLocalFrame(NULL);
     }

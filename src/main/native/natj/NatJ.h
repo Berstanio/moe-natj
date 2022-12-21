@@ -742,7 +742,7 @@ void setCachedFFIType(JNIEnv* env, jclass type, ffi_type* cType);
  */
 void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
                 jobject* returnInfo, int8_t* variadic = NULL,
-                size_t* ptrBuff = NULL, size_t* ptrCount = NULL);
+                size_t* ptrBuff = NULL, size_t* ptrCount = NULL, bool addCallerObject = false);
 
 /**
  * Cleanup the built construction infos

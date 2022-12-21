@@ -199,6 +199,10 @@
 		8B8F88881CFDE74B009D0B34 /* UnmanagedNativeBlockManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B8F88861CFDE74B009D0B34 /* UnmanagedNativeBlockManager.m */; };
 		8BAB27641CF481720076626D /* MappingClass.h in Headers */ = {isa = PBXBuildFile; fileRef = 8BAB27621CF481720076626D /* MappingClass.h */; };
 		8BAB27651CF481720076626D /* MappingClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 8BAB27631CF481720076626D /* MappingClass.m */; };
+		F0595A272936D1D000939712 /* SwiftRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0595A252936D1D000939712 /* SwiftRuntime.cpp */; };
+		F0595A282936D1D000939712 /* SwiftHandlers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0595A262936D1D000939712 /* SwiftHandlers.cpp */; };
+		F0595A2B2936D20700939712 /* SwiftHandlers.h in Headers */ = {isa = PBXBuildFile; fileRef = F0595A292936D20700939712 /* SwiftHandlers.h */; };
+		F0595A2C2936D20700939712 /* SwiftRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = F0595A2A2936D20700939712 /* SwiftRuntime.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -429,6 +433,10 @@
 		8B8F88861CFDE74B009D0B34 /* UnmanagedNativeBlockManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = UnmanagedNativeBlockManager.m; path = "../natj-objctests/src/test/native/UnmanagedNativeBlockManager.m"; sourceTree = "<group>"; };
 		8BAB27621CF481720076626D /* MappingClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MappingClass.h; path = "../natj-objctests/src/test/native/MappingClass.h"; sourceTree = "<group>"; };
 		8BAB27631CF481720076626D /* MappingClass.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MappingClass.m; path = "../natj-objctests/src/test/native/MappingClass.m"; sourceTree = "<group>"; };
+		F0595A252936D1D000939712 /* SwiftRuntime.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SwiftRuntime.cpp; sourceTree = "<group>"; };
+		F0595A262936D1D000939712 /* SwiftHandlers.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SwiftHandlers.cpp; sourceTree = "<group>"; };
+		F0595A292936D20700939712 /* SwiftHandlers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftHandlers.h; sourceTree = "<group>"; };
+		F0595A2A2936D20700939712 /* SwiftRuntime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftRuntime.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -729,6 +737,10 @@
 		23E37DBE17CE76B400844AD6 /* natj */ = {
 			isa = PBXGroup;
 			children = (
+				F0595A262936D1D000939712 /* SwiftHandlers.cpp */,
+				F0595A292936D20700939712 /* SwiftHandlers.h */,
+				F0595A252936D1D000939712 /* SwiftRuntime.cpp */,
+				F0595A2A2936D20700939712 /* SwiftRuntime.h */,
 				23262BCB1891225F0058A586 /* Logging.h */,
 				23262BCC1891225F0058A586 /* Logging.cpp */,
 				23E37DD617CE772500844AD6 /* CHandlers.cpp */,
@@ -967,6 +979,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F0595A2B2936D20700939712 /* SwiftHandlers.h in Headers */,
+				F0595A2C2936D20700939712 /* SwiftRuntime.h in Headers */,
 				23262BCD1891225F0058A586 /* Logging.h in Headers */,
 				23E37DEE17CE772500844AD6 /* CHandlers.h in Headers */,
 				23E37DF017CE772500844AD6 /* CRuntime.h in Headers */,
@@ -1241,6 +1255,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F0595A272936D1D000939712 /* SwiftRuntime.cpp in Sources */,
+				F0595A282936D1D000939712 /* SwiftHandlers.cpp in Sources */,
 				23E37DED17CE772500844AD6 /* CHandlers.cpp in Sources */,
 				23E37DEF17CE772500844AD6 /* CRuntime.cpp in Sources */,
 				23E37DF117CE772500844AD6 /* NatJ.cpp in Sources */,

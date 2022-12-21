@@ -1,0 +1,107 @@
+#include "SwiftRuntime.h"
+#include "SwiftHandlers.h"
+
+static jobject gRuntime = NULL;
+
+jclass gSwiftMethod = NULL;
+jclass gSwiftConstructor = NULL;
+
+jmethodID gSwiftMethodSymbolMethod = NULL;
+
+jobject getSwiftRuntime() {return gRuntime; }
+
+void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass clazz, jobject instance) {
+    gRuntime = env->NewGlobalRef(instance);
+
+    env->PushLocalFrame(2);
+
+    gSwiftMethod = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftMethod"));
+    
+    gSwiftConstructor = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftConstructor"));
+
+    gSwiftMethodSymbolMethod = env->GetMethodID(gSwiftMethod, "symbol", "()Ljava/lang/String;");
+    env->PopLocalFrame(NULL);
+}
+
+void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type) {
+    jobjectArray methods = (jobjectArray)env->CallObjectMethod(type, gGetDeclaredMethodsMethod);
+    jsize length = env->GetArrayLength(methods);
+
+    for (size_t i = 0; i < length; i++) {
+        jobject method = env->GetObjectArrayElement(methods, i);
+        jobject swiftMethodAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftMethod);
+        if (swiftMethodAnnotation) {
+            jstring symbolString = (jstring)env->CallObjectMethod(swiftMethodAnnotation, gSwiftMethodSymbolMethod);
+            const char* symbolName = env->GetStringUTFChars(symbolString, NULL);
+            void* symbol = dlsym(RTLD_DEFAULT, symbolName);
+            if (symbol == NULL) {
+                std::cout << "Symbol " << symbolName << " not found!" << std::endl;
+                continue;
+            }
+
+            jobjectArray parametersJava = (jobjectArray) env->CallObjectMethod(method, gGetParameterTypesMethod);
+            jsize parameterCount = env->GetArrayLength(parametersJava);
+            
+            jint modifiers = env->CallIntMethod(method, gGetModifiersMethod);
+            bool isStatic = modifiers & ACC_STATIC;
+            
+            ffi_type** parametersSwift = new ffi_type*[parameterCount + !isStatic];
+            
+            if(!isStatic) {
+                parametersSwift[0] = &ffi_type_pointer;
+            }
+            
+
+            //ffi_type** parametersSwift = new ffi_type*[parameterCount];
+            ffi_type** parametersFFI = new ffi_type*[parameterCount + 2];
+            parametersFFI[0] = &ffi_type_pointer;
+            parametersFFI[1] = &ffi_type_pointer;
+            //parametersFFI[2] = &ffi_type_pointer;
+
+            for (size_t i = 0; i < parameterCount; i++) {
+                jclass parameterJava = (jclass)env->GetObjectArrayElement(parametersJava, i);
+                parametersFFI[i + 2] = getFFIType(env, parameterJava, false);
+                parametersSwift[i + !isStatic] = getFFIType(env, parameterJava, false);
+            }
+
+            jclass returnJava = (jclass) env->CallObjectMethod(method, gGetReturnTypeMethod);
+            ffi_type* returnFFI = getFFIType(env, returnJava, false);            
+
+            ToNativeCallInfo* info = new ToNativeCallInfo;
+            info->method = env->NewGlobalRef(method);
+            info->swiftFunction = symbol;
+            info->variadic = kNotVariadic;
+            info->cached = false;
+            info->isStatic = isStatic;
+            ffi_prep_cif(&info->cif, FFI_DEFAULT_ABI, parameterCount + !isStatic, returnFFI, parametersSwift);
+            
+            jobject swiftConstructorAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftConstructor);
+            // SOLVE BETTER
+            if (!isStatic || swiftConstructorAnnotation) {
+                // Hack, to support x20 registers
+                info->cif.flags = info->cif.flags | 256;
+            }
+            
+
+            ffi_cif* closureCif = new ffi_cif;
+            void* code = NULL;
+            ffi_closure* closure = (ffi_closure*) ffi_closure_alloc(sizeof(ffi_closure), &code);
+
+            ffi_prep_cif(closureCif, FFI_DEFAULT_ABI, parameterCount + 2, returnFFI, parametersFFI);
+
+            ffi_prep_closure_loc(closure, closureCif, javaToSwiftHandler, info, code);
+
+                // Register method
+            jstring methodName = (jstring)env->CallObjectMethod(method, gGetMethodNameMethod);
+            const char* methodCName = env->GetStringUTFChars(methodName, NULL);
+            jstring methodDesc = (jstring)env->CallStaticObjectMethod(gAsmTypeClass, gGetMethodDescriptorStaticMethod, method);
+            const char* methodCDesc = env->GetStringUTFChars(methodDesc, NULL);
+            JNINativeMethod nativeMethod;
+            nativeMethod.name = methodCName;
+            nativeMethod.signature = methodCDesc;
+            nativeMethod.fnPtr = code;
+            env->RegisterNatives(type, &nativeMethod, 1);
+
+        }
+    }
+}
