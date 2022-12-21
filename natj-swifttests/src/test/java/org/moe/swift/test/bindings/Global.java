@@ -3,7 +3,7 @@ package org.moe.swift.test.bindings;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
-import org.moe.natj.swift.ann.SwiftMethod;
+import org.moe.natj.swift.ann.StaticSwiftMethod;
 
 @Runtime(SwiftRuntime.class)
 public class Global {
@@ -12,6 +12,6 @@ public class Global {
         NatJ.register();
     }
 
-    @SwiftMethod(symbol = "$s9swiftTest3sum4par14par2S2i_SitF")
+    @StaticSwiftMethod(symbol = "$s9swiftTest3sum4par14par2S2i_SitF")
     public static native int sum(int a, int b);
 }

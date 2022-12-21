@@ -6,7 +6,7 @@ import org.moe.natj.general.Pointer;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.SwiftConstructor;
-import org.moe.natj.swift.ann.SwiftMethod;
+import org.moe.natj.swift.ann.StaticSwiftMethod;
 
 @Runtime(SwiftRuntime.class)
 public class Vehicle extends NativeObject {
@@ -27,19 +27,19 @@ public class Vehicle extends NativeObject {
         super(new Pointer(constructor(getType())));
     }
 
-    @SwiftMethod(symbol = "$s9swiftTest7VehicleCMa")
+    @StaticSwiftMethod(symbol = "$s9swiftTest7VehicleCMa")
     private static native long getType();
 
     @SwiftConstructor
-    @SwiftMethod(symbol = "$s9swiftTest7VehicleCACycfC")
+    @StaticSwiftMethod(symbol = "$s9swiftTest7VehicleCACycfC")
     private static native long constructor(long type);
 
-    @SwiftMethod(symbol = "$s9swiftTest7VehicleC19currentSpeedPlusParyS2iF")
+    @StaticSwiftMethod(symbol = "$s9swiftTest7VehicleC19currentSpeedPlusParyS2iF")
     public native int currentSpeedPlusPar(int par);
 
-    @SwiftMethod(symbol = "$s9swiftTest7VehicleC12currentSpeedSivg")
+    @StaticSwiftMethod(symbol = "$s9swiftTest7VehicleC12currentSpeedSivg")
     public native int getSpeed();
 
-    @SwiftMethod(symbol = "$s9swiftTest7VehicleC12currentSpeedSivs")
+    @StaticSwiftMethod(symbol = "$s9swiftTest7VehicleC12currentSpeedSivs")
     public native void setSpeed(int speed);
 }

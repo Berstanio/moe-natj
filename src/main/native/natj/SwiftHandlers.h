@@ -15,6 +15,8 @@ struct ToNativeCallInfo {
 
   /** The c callback to call */
   void* swiftFunction;
+    
+    uint64_t offset;
 
   /** The ffi_cif needed for the native call */
   ffi_cif cif;

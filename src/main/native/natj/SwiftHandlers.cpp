@@ -18,7 +18,13 @@ void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user) {
        .runtime = getSwiftRuntime()},
       [value, info](unsigned n, ffi_type** types, void** values) {
         if (info->variadic == kNotVariadic) {
-          ffi_call(&info->cif, (void (*)())info->swiftFunction, value, values);
+            if (info->swiftFunction) {
+                ffi_call(&info->cif, (void (*)())info->swiftFunction, value, values);
+            } else {
+                uint64_t metadata = ***(uint64_t***)values;
+                void* function = *(void**)(metadata + info->offset);
+                ffi_call(&info->cif, (void (*)())function, value, values);
+            }
         } else {
           ffi_cif cif;
           ffi_prep_cif_var(&cif, info->cif.abi, info->cif.nargs, n,
