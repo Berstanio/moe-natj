@@ -816,11 +816,11 @@ void setCachedFFIType(JNIEnv* env, jclass type, ffi_type* cType) {
                           reinterpret_cast<jlong>(cType));
 }
     
-jobject constructInfoForJClass(JNIEnv* env, jclass clazz, jobjectArray paramAnns, jobject runtime, bool toJava) {
+jobject constructInfoForJClass(JNIEnv* env, jclass clazz, jobjectArray paramAnns, jobject runtime, bool toJava, bool forceByValue = false) {
     jsize annCount = paramAnns == NULL ? 0 : env->GetArrayLength(paramAnns);
     jobject mappedType = NULL;
     jobject callable = NULL;
-    jboolean byValue = false;
+    jboolean byValue = forceByValue;
     jboolean owned = false;
     jobject referenceInfo = NULL;
     for (jsize j = 0; j < annCount; j++) {
@@ -967,7 +967,7 @@ void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
     infos.reserve(parameterCount + addCallerObject);
     if(addCallerObject) {
         jclass cls = (jclass)env->CallObjectMethod(method, gGetMethodDeclaringClassMethod);
-        infos.push_back(constructInfoForJClass(env, cls, NULL, runtime, toJava));
+        infos.push_back(constructInfoForJClass(env, cls, NULL, runtime, toJava, env->CallBooleanMethod(cls, gIsAnnotationPresentMethod, gStructureClass)));
     }
     for (jsize i = 0; i < parameterCount; i++) {
       env->PushLocalFrame(20);

@@ -25,6 +25,14 @@ public class SwiftStructTest extends BaseSwiftTest {
         long randomField = struct.getRandomField();
         assertEquals(7, randomField);
         long par1 = 5;
-        assertEquals(randomField + par1, TestStruct.getStructNumber(par1, struct));
+        assertEquals(randomField + par1, struct.getStructNumber(par1));
+    }
+
+    @Test
+    public void testStructMethodNoParameter() {
+        TestStruct struct = new TestStruct();
+        long randomField = struct.getRandomField();
+        assertEquals(7, randomField);
+        assertEquals(randomField, struct.getStructNumber());
     }
 }

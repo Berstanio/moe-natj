@@ -10,6 +10,10 @@ public struct TestStruct {
     public func getStructNumber(_ par1: Int) -> Int {
         return randomField2 + par1
     }
+
+    public func getStructNumber2() -> Int {
+        return randomField2
+    }
 }
 
 public func testFunc(_ par1: TestStruct, _ par2: Int) -> Int {

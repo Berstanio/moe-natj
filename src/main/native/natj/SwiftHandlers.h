@@ -24,6 +24,8 @@ struct ToNativeCallInfo {
     bool isStatic;
     
     bool isProtocol;
+    
+    bool isStruct;
 
     /** Info needed for variadic methods */
     int8_t variadic;

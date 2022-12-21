@@ -51,7 +51,9 @@ public class TestStruct extends StructObject {
     public static native TestStruct constructor();
 
     @StaticSwiftMethod(symbol = "$s9swiftTest0B6StructV03getC6NumberyS2iF")
-    public static native long getStructNumber(long par1, @ByValue TestStruct struct);
+    public native long getStructNumber(long par1);
 
+    @StaticSwiftMethod(symbol = "$s9swiftTest0B6StructV03getC7Number2SiyF")
+    public native long getStructNumber();
 
 }

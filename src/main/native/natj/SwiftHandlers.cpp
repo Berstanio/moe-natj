@@ -19,7 +19,25 @@ void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user) {
         [value, info](unsigned n, ffi_type** types, void** values) {
             if (info->variadic == kNotVariadic) {
                 if (info->swiftFunction) {
-                    ffi_call(&info->cif, (void (*)())info->swiftFunction, value, values);
+                    ffi_cif cifToUse = info->cif;
+                    if (!info->isStatic && info->isStruct) {
+                        void* structPointer = values[0];
+                        memmove(&(values[0]), &(values[1]), (info->cif.nargs - 1) * sizeof(void*));
+                        values[info->cif.nargs - 1] = structPointer;
+                        
+                        // Caching rewritten cif?
+                        ffi_cif tmp;
+                        memcpy(&tmp, &cifToUse, sizeof(ffi_cif));
+                        ffi_type** args_old = tmp.arg_types;
+                        // Does... that work?
+                        ffi_type** args_new;
+                        memcpy(args_new, &args_old[1], (info->cif.nargs - 1) * sizeof(ffi_type*));
+                        args_new[info->cif.nargs - 1] = args_old[0];
+                        tmp.arg_types = args_new;
+                        cifToUse = tmp;
+                    }
+
+                    ffi_call(&cifToUse, (void (*)())info->swiftFunction, value, values);
                 } else {
                     void* function;
                     if (info->isProtocol) {
