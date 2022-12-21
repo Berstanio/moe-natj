@@ -1,5 +1,6 @@
 package org.moe.natj.swift.map;
 
+import org.moe.natj.c.StructObject;
 import org.moe.natj.general.Mapper;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeObject;
@@ -23,7 +24,10 @@ public class SwiftObjectMapper implements Mapper {
         try {
             Constructor<?> constructor;
             synchronized (info) {
-                Class<?> classForInstance = SwiftRuntime.getClassForPeer(instance);
+                Class<?> classForInstance = null;
+                if (!StructObject.class.isAssignableFrom(info.type)) {
+                    classForInstance = SwiftRuntime.getClassForPeer(instance);
+                }
                 if (classForInstance != null) {
                     constructor = classForInstance.getDeclaredConstructor(Pointer.class);
                     constructor.setAccessible(true);

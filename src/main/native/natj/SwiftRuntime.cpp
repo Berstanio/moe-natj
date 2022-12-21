@@ -1,5 +1,6 @@
 #include "SwiftRuntime.h"
 #include "SwiftHandlers.h"
+#include "CRuntime.h"
 
 static jobject gRuntime = NULL;
 
@@ -35,6 +36,11 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type) {
     jobjectArray methods = (jobjectArray)env->CallObjectMethod(type, gGetDeclaredMethodsMethod);
     jsize length = env->GetArrayLength(methods);
+    
+    bool isStructure = env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gStructureClass);
+    if (isStructure) {
+        Java_org_moe_natj_c_CRuntime_registerClass(env, clazz, type);
+    }
 
     for (size_t i = 0; i < length; i++) {
         jobject method = env->GetObjectArrayElement(methods, i);

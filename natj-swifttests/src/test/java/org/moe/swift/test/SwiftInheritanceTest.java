@@ -24,7 +24,7 @@ public class SwiftInheritanceTest extends BaseSwiftTest {
     }
 
     @Test
-    public void testOverride() {
+    public void testVirtualDispatch() {
         SubClass subClass = new SubClass();
         assertEquals(2, subClass.getClassSpecificNumber());
         BaseClass baseClass = new BaseClass(subClass.getPeer());
