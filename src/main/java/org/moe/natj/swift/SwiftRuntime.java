@@ -73,4 +73,7 @@ public class SwiftRuntime extends NativeRuntime {
     @StaticSwiftMethod(symbol = "swift_release")
     public static native void release(long peer);
 
+    @StaticSwiftMethod(symbol = "$ss12_autoreleaseyyyXlF")
+    public static native void autorelease(long peer);
+
 }
