@@ -1,4 +1,4 @@
-package org.moe.xosrt.binding.test.swift;
+package org.moe.swift.test.bindings;
 
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeObject;
@@ -27,19 +27,19 @@ public class Vehicle extends NativeObject {
         super(new Pointer(constructor(getType())));
     }
 
-    @SwiftMethod(symbol = "$s5swift7VehicleCMa")
+    @SwiftMethod(symbol = "$s9swiftTest7VehicleCMa")
     private static native long getType();
 
     @SwiftConstructor
-    @SwiftMethod(symbol = "$s5swift7VehicleCACycfC")
+    @SwiftMethod(symbol = "$s9swiftTest7VehicleCACycfC")
     private static native long constructor(long type);
 
-    @SwiftMethod(symbol = "$s5swift7VehicleC9makeNoiseyySiF")
-    public native void makeNoise(int par);
+    @SwiftMethod(symbol = "$s9swiftTest7VehicleC19currentSpeedPlusParyS2iF")
+    public native int currentSpeedPlusPar(int par);
 
-    @SwiftMethod(symbol = "$s5swift7VehicleC12currentSpeedSivg")
+    @SwiftMethod(symbol = "$s9swiftTest7VehicleC12currentSpeedSivg")
     public native int getSpeed();
 
-    @SwiftMethod(symbol = "$s5swift7VehicleC12currentSpeedSivs")
+    @SwiftMethod(symbol = "$s9swiftTest7VehicleC12currentSpeedSivs")
     public native void setSpeed(int speed);
 }

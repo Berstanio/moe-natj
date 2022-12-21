@@ -27,5 +27,6 @@ include ':natj-processor'
 // Tests
 include ':natj-ctests'
 include ':natj-objctests'
+include ':natj-swifttests'
 include ':natj-cxxtests'
 include ':natj-cxxtests:dyntype'

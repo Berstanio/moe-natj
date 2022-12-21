@@ -1,0 +1,60 @@
+import java.util.stream.Collectors
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
+    implementation project(":")
+}
+
+test {
+    useJUnitPlatform()
+}
+
+def swiftFiles = ["ClassTest.swift", "GlobalTest.swift"]
+
+task compileSwift(type: Exec) {
+    doFirst {
+        mkdir "$buildDir/swift/"
+    }
+    workingDir file("src/test/native")
+    commandLine = ["swiftc"] + swiftFiles + ["-emit-library", "-g", "-o", "$buildDir/swift/libswiftTest.dylib"]
+}
+
+task getSymbols(type: Exec) {
+    def output = new ByteArrayOutputStream()
+    dependsOn(compileSwift)
+    workingDir file("$buildDir/swift/")
+    commandLine "nm", "-g", "-C", "--defined-only", "$buildDir/swift/libswiftTest.dylib"
+    standardOutput = output
+    doLast {
+        def outputString = output.toString()
+        def lines = outputString.split("\n")
+        def symbols = lines.findAll {
+            it.contains(" T ")
+        }.stream().map {it.split("T _")[1]}.collect(Collectors.toList())
+        exec {
+            commandLine = ["swift", "demangle"] + symbols
+        }
+    }
+}
+
+tasks.withType(Test).configureEach {
+    def nativeConfiguration = 'Debug'
+    dependsOn ":natj-mac:build_natj_${nativeConfiguration}_macosx", compileSwift
+
+    systemProperty 'java.library.path', file("../natj-mac/build/xcode/${nativeConfiguration}").toString() + ":" + "$buildDir/swift/"
+    testLogging.showStandardStreams = true
+    if (rootProject.hasProperty("moe.use.addresssanitizer")) {
+        environment['DYLD_INSERT_LIBRARIES'] = '/Applications/Xcode.app/Contents/Developer/Toolchains/' +
+                'XcodeDefault.xctoolchain/usr/lib/clang/14.0.0/lib/darwin/libclang_rt.asan_osx_dynamic.dylib'
+        environment['ASAN_OPTIONS'] = 'handle_segv=0:allow_user_segv_handler=1'
+    }
+}
