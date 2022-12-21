@@ -28,9 +28,15 @@ public class SwiftObjectMapper implements Mapper {
                 Class<?> classForInstance = null;
                 boolean isProtocolReturn = info.type.isAnnotationPresent(SwiftProtocol.class);
                 if (isProtocolReturn) {
-                    classForInstance = SwiftRuntime.getClassForPeer(SwiftRuntime.dereferencePeer(instance));
-                    pointer.setPeer(SwiftRuntime.dereferencePeer(instance));
+                    // Look at definition of existential container, to see where the 24 comes from
+                    // 3 * value, 1 * metadata, 1 * pwt
+                    long metadataPointer = SwiftRuntime.dereferencePeer(instance + 24);
+                    classForInstance = SwiftRuntime.getClassForMetadataPointer(metadataPointer);
                     if (classForInstance == null) throw new RuntimeException("No binding found for protocol, currently unsupported");
+                    instance = SwiftRuntime.dereferencePeer(instance);
+                    // TODO: 08.12.22 For structs the EC doesn't directly point to the struct. So we need a small offset
+                    if (StructObject.class.isAssignableFrom(classForInstance)) instance += 16;
+                    pointer.setPeer(instance);
                 } else if (!StructObject.class.isAssignableFrom(info.type)) {
                     classForInstance = SwiftRuntime.getClassForPeer(instance);
                 }

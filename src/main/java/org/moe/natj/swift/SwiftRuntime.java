@@ -54,13 +54,17 @@ public class SwiftRuntime extends NativeRuntime {
         }
     }
 
-    public static Class<?> getClassForPeer(long peer) {
-        // TODO: 07.12.22 Traverse super classes too
-        Class<?> foundClass = typeClassMap.get(dereferencePeer(peer));
+    public static Class<?> getClassForMetadataPointer(long peer) {
+        Class<?> foundClass = typeClassMap.get(peer);
         if (foundClass == null) {
             System.err.printf("No class found for 0x%08X%n", peer);
         }
         return foundClass;
+    }
+
+    public static Class<?> getClassForPeer(long peer) {
+        // TODO: 07.12.22 Traverse super classes too
+        return getClassForMetadataPointer(dereferencePeer(peer));
     }
 
     // TODO: 07.12.22 Weeeell, this is silly, since it isn't a swift method... But since the conventions are so similar, it works
