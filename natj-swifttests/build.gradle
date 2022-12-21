@@ -48,6 +48,45 @@ task getSymbols(type: Exec) {
     }
 }
 
+task getOffsets() {
+    dependsOn(compileSwift)
+    doLast {
+        def output = new ByteArrayOutputStream()
+        exec {
+            workingDir file("src/test/native")
+            commandLine =  ["swiftc", "-emit-assembly", "-module-name", "swiftTest"] + swiftFiles
+            standardOutput = output
+            errorOutput = output
+        }
+        def lines = output.toString().split("\n")
+        for (int i = 0; i < lines.size(); i++) {
+            def line = lines[i]
+            if (line.endsWith("CMf:") && line.startsWith("_\$")) {
+                def tmpLine = line
+                def count = -18
+                while (!tmpLine.isEmpty()) {
+                    count++
+                    tmpLine = lines[++i]
+                }
+                def iTMP = i
+                tmpLine = lines[--iTMP]
+                count--
+                while (!tmpLine.split("\\.quad\t")[1].matches("[0-9]+")) {
+                    def symbol = tmpLine.split("\\.quad\t")[1]
+                    def outDemangle = new ByteArrayOutputStream()
+                    exec {
+                        commandLine = ["swift", "demangle", symbol]
+                        standardOutput = outDemangle
+                    }
+                    println(outDemangle.toString().split("---> ")[1].trim().split(": ")[0].split("-> ")[0] + " -> " + (count * 8 + 88))
+                    count--
+                    tmpLine = lines[--iTMP]
+                }
+            }
+        }
+    }
+}
+
 tasks.withType(Test).configureEach {
     def nativeConfiguration = 'Debug'
     dependsOn ":natj-mac:build_natj_${nativeConfiguration}_macosx", compileSwift
