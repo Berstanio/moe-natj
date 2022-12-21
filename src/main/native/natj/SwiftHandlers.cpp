@@ -71,11 +71,11 @@ void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user) {
 }
 
 void swiftToJavaHandler(ffi_cif* cif, void* result, void** args, void* user) {
-    void* test = NULL;
-    void* test2 = (void*)&test;
+    void* swiftObjectPointer = NULL;
+    void* swiftObjectPointerPointer = (void*)&swiftObjectPointer;
 
-    asm("mov %[test], x20"
-        : [test] "=r"(test));
+    asm("mov %[swiftObjectPointer], x20"
+        : [swiftObjectPointer] "=r"(swiftObjectPointer));
 
     ToJavaCallInfo* info = (ToJavaCallInfo*)user;
     ATTACH_ENV();
@@ -92,7 +92,7 @@ void swiftToJavaHandler(ffi_cif* cif, void* result, void** args, void* user) {
         { .env = env,
             .nvalues = 1,
             .types = cif->arg_types,
-            .values = &test2,
+            .values = &swiftObjectPointerPointer,
             .infos = info->paramInfos },
         [self](unsigned n, ffi_type** types, void** values) {
             memcpy(self, values[0], ffi_type_pointer.size);
