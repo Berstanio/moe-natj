@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.swift.test.bindings.BaseClass;
 import org.moe.swift.test.bindings.Global;
+import org.moe.swift.test.bindings.JavaSideSubClass;
 import org.moe.swift.test.bindings.SubClass;
 
 public class SwiftInheritanceTest extends BaseSwiftTest {
@@ -49,5 +50,16 @@ public class SwiftInheritanceTest extends BaseSwiftTest {
         assertNotEquals(SubClass.getType(), SwiftRuntime.dereferencePeer(baseClass.getPeerPointer()));
         assertEquals(SubClass.class, baseClass.getClass());
         assertEquals(3, baseClass.getClassSpecificNumber());
+    }
+
+    @Test
+    public void testJavaSideSubClass() {
+        JavaSideSubClass javaSideSubClass = new JavaSideSubClass();
+        assertEquals(SwiftRuntime.getMetadataForClass(javaSideSubClass.getClass()), SwiftRuntime.dereferencePeer(javaSideSubClass.getPeerPointer()));
+        assertEquals(42, javaSideSubClass.getClassSpecificNumber());
+        assertEquals(6, javaSideSubClass.getBaseClassField());
+        assertEquals(42, JavaSideSubClass.getClassNumberGlobal(javaSideSubClass));
+        // TODO: 19.12.22 Implement tests to ensure, that java class is correctly rematched to swift class
+        // TODO: 19.12.22 Implement tests, to ensure that binding class always recreate a new class
     }
 }

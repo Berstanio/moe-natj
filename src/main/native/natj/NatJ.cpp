@@ -1776,11 +1776,3 @@ void natj_printJavaStackTrace(JNIEnv *env) {
   }
   env->DeleteLocalRef(cls);
 }
-
-jmethodID getMethodIDFromMethod(JNIEnv* env, jclass enclosingClass, jobject method) {
-    jstring methodName = (jstring)env->CallObjectMethod(method, gGetMethodNameMethod);
-    const char* methodCName = env->GetStringUTFChars(methodName, NULL);
-    jstring methodDesc = (jstring)env->CallStaticObjectMethod(gAsmTypeClass, gGetMethodDescriptorStaticMethod, method);
-    const char* methodCDesc = env->GetStringUTFChars(methodDesc, NULL);
-    return env->GetMethodID(enclosingClass, methodCName, methodCDesc);
-}

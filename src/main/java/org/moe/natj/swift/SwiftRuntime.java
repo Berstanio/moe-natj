@@ -53,11 +53,25 @@ public class SwiftRuntime extends NativeRuntime {
             Method method = type.getDeclaredMethod("getType");
             method.setAccessible(true);
             Long peer = (Long) method.invoke(null);
-            typeClassMap.put(peer, type);
-            classTypeMap.put(type, peer);
+            registerMetadataPointer(type, peer);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             System.err.println("No getType for " + type.getName());
         }
+    }
+
+    public static void registerMetadataPointer(Class<?> type, long peer) {
+        typeClassMap.put(peer, type);
+        classTypeMap.put(type, peer);
+    }
+
+    public static long getClosestMetadataPointerFromInheritedClass(Class<?> type) {
+        assert type != null;
+        Class<?> found = type;
+        while (!classTypeMap.containsKey(found)) {
+            if (found == null) throw new RuntimeException("Couldn't find matching metadata for " + type.getName());
+            found = type.getSuperclass();
+        }
+        return classTypeMap.get(found);
     }
 
     public static long getMetadataForClass(Class<?> aClass) {

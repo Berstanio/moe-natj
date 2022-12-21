@@ -1050,5 +1050,4 @@ jobject getWeakReference(JNIEnv* env, uint64_t reference);
  */
 void natj_printJavaStackTrace(JNIEnv* env);
 
-jmethodID getMethodIDFromMethod(JNIEnv* env, jclass enclosingClass, jobject method);
 #endif

@@ -5,10 +5,12 @@ import org.moe.natj.general.NativeObject;
 import org.moe.natj.general.Pointer;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
+import org.moe.natj.swift.ann.SwiftBindingClass;
 import org.moe.natj.swift.ann.SwiftConstructor;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
 
 @Runtime(SwiftRuntime.class)
+@SwiftBindingClass
 public class Vehicle extends NativeObject {
 
     static {

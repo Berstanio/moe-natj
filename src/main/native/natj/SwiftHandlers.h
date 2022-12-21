@@ -36,4 +36,16 @@ struct ToNativeCallInfo {
 #endif
 };
 
+struct ToJavaCallInfo {
+    jobject method;
+    jmethodID methodId;
+    bool cached;
+    jobject* paramInfos;
+    jobject returnInfo;
+    void* jniFunction;
+    ffi_cif cif;
+};
+
 void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user);
+
+void swiftToJavaHandler(ffi_cif* cif, void* result, void** args, void* user);

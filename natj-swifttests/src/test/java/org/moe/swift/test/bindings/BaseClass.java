@@ -5,11 +5,13 @@ import org.moe.natj.general.NativeObject;
 import org.moe.natj.general.Pointer;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
+import org.moe.natj.swift.ann.SwiftBindingClass;
 import org.moe.natj.swift.ann.SwiftConstructor;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
 import org.moe.natj.swift.ann.VirtualSwiftMethod;
 
 @Runtime(SwiftRuntime.class)
+@SwiftBindingClass
 public class BaseClass extends NativeObject {
 
     static {
@@ -26,7 +28,8 @@ public class BaseClass extends NativeObject {
     }
 
     public BaseClass() {
-        super(new Pointer(constructor(getType())));
+        super(new Pointer(0));
+        getPeer().setPeer(constructor(SwiftRuntime.getMetadataForClass(getClass())));
     }
 
     @StaticSwiftMethod(symbol = "$s9swiftTest9BaseClassCMa")
