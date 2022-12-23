@@ -5,12 +5,16 @@ import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeRuntime;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
+import org.moe.natj.swift.ann.SwiftProtocol;
 import org.moe.natj.swift.map.SwiftObjectMapper;
 import org.moe.natj.swift.map.SwiftStringMapper;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 
 @Runtime(SwiftRuntime.class)
 public class SwiftRuntime extends NativeRuntime {
@@ -68,8 +72,11 @@ public class SwiftRuntime extends NativeRuntime {
         assert type != null;
         Class<?> found = type;
         while (!classTypeMap.containsKey(found)) {
-            if (found == null) throw new RuntimeException("Couldn't find matching metadata for " + type.getName());
-            found = type.getSuperclass();
+            if (found == null) {
+                System.out.println("Couldn't find matching metadata for " + type.getName());
+                return 0;
+            }
+            found = found.getSuperclass();
         }
         return classTypeMap.get(found);
     }
@@ -97,8 +104,41 @@ public class SwiftRuntime extends NativeRuntime {
         return foundClass;
     }
 
+    public static Class<?>[] getAllInheritedInterfaces(Class<?> type) {
+        ArrayList<Class<?>> interfaces = new ArrayList<>();
+        type = type.getSuperclass();
+        while (type != null) {
+            interfaces.addAll(Arrays.asList(type.getInterfaces()));
+            type = type.getSuperclass();
+        }
+        return interfaces.stream().filter(aClass -> aClass.isAnnotationPresent(SwiftProtocol.class)).toArray(Class[]::new);
+    }
+
+    public static Method[] findOriginMethods(Method method) {
+        ArrayList<Class<?>> interfaces = new ArrayList<>();
+        Class<?> type = method.getDeclaringClass();
+        while (type != null) {
+            interfaces.addAll(Arrays.asList(type.getInterfaces()));
+            type = type.getSuperclass();
+        }
+        return interfaces.stream()
+                .filter(aClass -> aClass.isAnnotationPresent(SwiftProtocol.class))
+                .map(aClass -> {
+                    try {
+                        return aClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
+                    } catch (NoSuchMethodException e) {
+                        return null;
+                    }
+                }).filter(Objects::nonNull).toArray(Method[]::new);
+    }
+
     public static void registerProtocolClass(Class<?> type, long protocolDescriptor) {
         classProtocolDescriptorMap.put(type, protocolDescriptor);
+    }
+
+    public static void registerProtocolWitnessTable(long metadata, Class<?> type, long pwt) {
+        HashMap<Class<?>, Long> classToWitnessTable = typeToClassWitnessTableMapMap.computeIfAbsent(metadata, k -> new HashMap<>());
+        classToWitnessTable.put(type, pwt);
     }
 
     public static long getProtocolWitnessTable(long metadata, Class<?> type) {
@@ -116,6 +156,7 @@ public class SwiftRuntime extends NativeRuntime {
     @StaticSwiftMethod(symbol = "swift_release")
     public static native void release(long peer);
 
+    @Deprecated
     @StaticSwiftMethod(symbol = "$ss12_autoreleaseyyyXlF")
     public static native void autorelease(long peer);
 

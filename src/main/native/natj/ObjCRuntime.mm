@@ -1321,7 +1321,7 @@ jthrowable handleObjCException(JNIEnv* env, void* exception) {
       // Build and store the construction info
       jobject buildInfo = env->CallStaticObjectMethod(
           gNatJClass, gBuildJavaObjectInfoStaticMethod, gRuntime, cls,
-          gObjCObjectMapperClass, NULL, NULL, false, false, false);
+          gObjCObjectMapperClass, NULL, NULL, false, false, false, false);
       info.constructionInfo = env->NewGlobalRef(buildInfo);
       env->DeleteLocalRef(buildInfo);
       [gObjCAllocMap
@@ -1594,7 +1594,7 @@ Class registerObjCClass(JNIEnv* env, jclass type, bool isProxy, jstring baseClas
     // the Java side.
     jobject buildInfo = env->CallStaticObjectMethod(
         gNatJClass, gBuildJavaObjectInfoStaticMethod, gRuntime, type,
-        gObjCObjectMapperClass, NULL, NULL, !isHybrid, false, false);
+        gObjCObjectMapperClass, NULL, NULL, !isHybrid, false, false, false);
     allocInfo.constructionInfo = env->NewGlobalRef(buildInfo);
     env->DeleteLocalRef(buildInfo);
   }

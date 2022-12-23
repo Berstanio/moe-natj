@@ -190,7 +190,7 @@ public class CRuntime extends NativeRuntime {
     public static <T extends OpaquePtr> T cast(ConstVoidPtr ptr, java.lang.Class<T> cls) {
         JavaObjectConstructionInfo toOpqquePtrInfo =
                 NatJ.buildJavaObjectConstructionInfo(null, cls, null, null, null, false, false,
-                        false);
+                        false, false);
 
         return (T) NatJ.toJava(ptr.getPeer().getPeer(), toOpqquePtrInfo);
     }

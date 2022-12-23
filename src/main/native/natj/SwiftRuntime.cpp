@@ -19,6 +19,10 @@ jmethodID gSwiftMethodOffsetMethod = NULL;
 jmethodID gSwiftRuntimeRegisterProtocol = NULL;
 jmethodID gSwiftRuntimeRegisterMetadata = NULL;
 jmethodID gSwiftRuntimeGetMetadata = NULL;
+jmethodID gSwiftRuntimeGetPWT = NULL;
+jmethodID gSwiftRuntimeGetAllInheritedInterfaces = NULL;
+jmethodID gSwiftRuntimeRegisterPWT = NULL;
+jmethodID gSwiftRuntimeFindOriginMethods = NULL;
 
 jobject getSwiftRuntime() { return gRuntime; }
 
@@ -84,6 +88,10 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
     gSwiftRuntimeRegisterProtocol = env->GetStaticMethodID(gSwiftRuntimeClass, "registerProtocolClass", "(Ljava/lang/Class;J)V");
     gSwiftRuntimeRegisterMetadata = env->GetStaticMethodID(gSwiftRuntimeClass, "registerMetadataPointer", "(Ljava/lang/Class;J)V");
     gSwiftRuntimeGetMetadata = env->GetStaticMethodID(gSwiftRuntimeClass, "getClosestMetadataPointerFromInheritedClass", "(Ljava/lang/Class;)J");
+    gSwiftRuntimeGetPWT = env->GetStaticMethodID(gSwiftRuntimeClass, "getProtocolWitnessTable", "(JLjava/lang/Class;)J");
+    gSwiftRuntimeRegisterPWT = env->GetStaticMethodID(gSwiftRuntimeClass, "registerProtocolWitnessTable", "(JLjava/lang/Class;J)V");
+    gSwiftRuntimeGetAllInheritedInterfaces = env->GetStaticMethodID(gSwiftRuntimeClass, "getAllInheritedInterfaces", "(Ljava/lang/Class;)[Ljava/lang/Class;");
+    gSwiftRuntimeFindOriginMethods = env->GetStaticMethodID(gSwiftRuntimeClass, "findOriginMethods", "(Ljava/lang/reflect/Method;)[Ljava/lang/reflect/Method;");
     gSwiftProtocolDescriptorMethod = env->GetMethodID(gSwiftProtocolAnnotationClass, "protocolDescriptor", "()Ljava/lang/String;");
     env->PushLocalFrame(2);
 
@@ -105,9 +113,37 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
 #define get_at_offset(ptr, offset) \
     (void*)(((uintptr_t)(ptr) + (offset)))
 
-void* generateMetadataPointer(JNIEnv* env, jclass type) {
+void createPWTForDirectClass(JNIEnv* env, jclass type, void* metadata) {
+    jobjectArray interfaces = (jobjectArray) env->CallObjectMethod(type, gGetClassInterfacesMethod);
+    jsize interfaceCount = env->GetArrayLength(interfaces);
+    for (jsize i = 0; i < interfaceCount; i++) {
+        jclass interface = (jclass) env->GetObjectArrayElement(interfaces, i);
+        jobjectArray methods = (jobjectArray)env->CallObjectMethod(interface, gGetDeclaredMethodsMethod);
+        jsize length = env->GetArrayLength(methods);
+        void* pwt = malloc(length * 8 + 8);
+        env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterPWT, (jlong) metadata, interface, (jlong) pwt);
+    }
+}
+
+void* generateEmptyStructMetadataPointer(JNIEnv* env, jclass type) {
+    void* metadata = malloc(3 * 8);
+    metadata = get_at_offset(metadata, 8);
+    void* vwt = dlsym(RTLD_DEFAULT, "$sytWV");
+    set_at_offset(metadata, void*, -8, vwt);
+    set_at_offset(metadata, uint64_t, 0, 512);
+    
+    // Proper implement
+    set_at_offset(metadata, void*, 0, NULL);
+    return metadata;
+}
+
+void* generateClassMetadataPointer(JNIEnv* env, jclass type, bool* isClass) {
     void* closestMetadata = (void*)env->CallStaticLongMethod(gSwiftRuntimeClass, gSwiftRuntimeGetMetadata, type);
-    size_t metadataSize = 104 + 16;
+    if (closestMetadata == 0) {
+        *isClass = false;
+        return generateEmptyStructMetadataPointer(env, type);
+    }
+    size_t metadataSize = 104 + 16; // Find out the size :( // Also, use swift runtime methods, e.g. swift_allocateGenericClassMetadata maybe?
     void* newMetadata = malloc(metadataSize); // get real values
     memcpy(newMetadata, get_at_offset(closestMetadata, -16), metadataSize);
     newMetadata = get_at_offset(newMetadata, 16);
@@ -129,6 +165,15 @@ void* generateMetadataPointer(JNIEnv* env, jclass type) {
     set_at_offset(newMetadata, void*, 32, data);
     // offset 64 => nominal type descriptor
 
+    // Create PWT's
+    jobjectArray interfaces = (jobjectArray) env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeGetAllInheritedInterfaces, type);
+    jsize interfaceCount = env->GetArrayLength(interfaces);
+    for (jsize i = 0; i < interfaceCount; i++) {
+        jclass interface = (jclass) env->GetObjectArrayElement(interfaces, i);
+        void* pwt = (void*) env->CallStaticLongMethod(gSwiftRuntimeClass, gSwiftRuntimeGetPWT, closestMetadata, interface);
+        env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterPWT, (jlong) newMetadata, type, (jlong) pwt);
+    }
+    
     return newMetadata;
 }
 
@@ -231,7 +276,7 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
     env->RegisterNatives(type, &nativeMethod, 1);
 }
 
-void registerJavaMethod(JNIEnv* env, jclass type, jobject method, void* metadataPointer, uint64_t offset) {
+void registerJavaMethod(JNIEnv* env, jclass type, jobject method, void* metadataPointer, uint64_t offset, bool patchMetadata = true) {
     jobjectArray parametersJava = (jobjectArray)env->CallObjectMethod(method, gGetParameterTypesMethod);
     jsize parameterCount = env->GetArrayLength(parametersJava);
 
@@ -275,20 +320,47 @@ void registerJavaMethod(JNIEnv* env, jclass type, jobject method, void* metadata
     info->method = env->NewGlobalRef(method);
     info->jniFunction = getJNICallFunction(env, returnToJava, false);
     info->methodId = env->FromReflectedMethod(info->method);
-
+    info->isProtocolCall = false;
+    
     ffi_prep_cif_var(&info->cif, FFI_DEFAULT_ABI, 3, parameterCount + 3, returnToJava, parametersToJava);
-
     ffi_cif* closureCif = new ffi_cif;
-    void* code = NULL;
-    ffi_closure* closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &code);
-
     ffi_prep_cif(closureCif, FFI_DEFAULT_ABI, parameterCount + 1, returnSwift, parametersSwift);
 
     closureCif->flags = closureCif->flags | 256;
+    
+    if (patchMetadata) {
 
-    ffi_prep_closure_loc(closure, closureCif, swiftToJavaHandler, info, code);
+        void* code = NULL;
+        ffi_closure* closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &code);
 
-    set_at_offset(metadataPointer, void*, offset, code);
+        ffi_prep_closure_loc(closure, closureCif, swiftToJavaHandler, info, code);
+
+        set_at_offset(metadataPointer, void*, offset, code);
+    }
+    
+    // Now also patch the correct pwt and than everything is cool!
+    jobjectArray methods = (jobjectArray) env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeFindOriginMethods, method);
+    jsize length = env->GetArrayLength(methods);
+    for (jsize i = 0; i < length; i++) {
+        jobject method = env->GetObjectArrayElement(methods, i);
+        jclass interface = (jclass) env->CallObjectMethod(method, gGetMethodDeclaringClassMethod);
+        void* pwt = (void*) env->CallStaticLongMethod(gSwiftRuntimeClass, gSwiftRuntimeGetPWT, metadataPointer, interface);
+        jobject swiftVirtualMethodAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftVirtualMethod);
+        jlong offset = env->CallLongMethod(swiftVirtualMethodAnnotation, gSwiftMethodOffsetMethod);
+        
+        // TODO: We need different closures here, to differentiate between "called as protocol" and "called as object method", so we can correctly unpack it when converting to java
+        ToJavaCallInfo* protocolInfo = new ToJavaCallInfo;
+        memcpy(protocolInfo, info, sizeof(ToJavaCallInfo));
+        protocolInfo->isProtocolCall = true;
+        
+        void* code = NULL;
+        ffi_closure* closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &code);
+
+        ffi_prep_closure_loc(closure, closureCif, swiftToJavaHandler, protocolInfo, code);
+        
+        
+        set_at_offset(pwt, void*, offset, code);
+    }
 }
 
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type) {
@@ -314,10 +386,12 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
 
     bool isInherited = !env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gSwiftBindingClass) && !isProtocolClass && !isStructure && env->IsAssignableFrom(type, gNativeObjectClass);
     void* metadataPointer = NULL;
+    bool isClass = true;
     if (isInherited) {
-        metadataPointer = generateMetadataPointer(env, type);
+        metadataPointer = generateClassMetadataPointer(env, type, &isClass);
         // We sadly can't use fast acces methods like __natjCache here, since we don't deal with generated bindings. We need to rely on the hashmaps
         env->CallStaticVoidMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterMetadata, type, (jlong)metadataPointer);
+        createPWTForDirectClass(env, type, metadataPointer);
     }
 
     for (jint i = 0; i < length; i++) {
@@ -352,7 +426,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         if (!isNative && isInherited) {
             // We need to deal with that later, after the all native methods got registered. Since atm we still need the metadata type pointer
             // If we are can later generate metadata for ourselves, we can do that directly here, which would be very convinient
-            registerJavaMethod(env, type, method, metadataPointer, offset);
+            registerJavaMethod(env, type, method, metadataPointer, offset, isClass);
             continue;
         } else {
             registerNativeMethod(env, type, method, isStatic, isStructure, isProtocolClass, symbol, offset);

@@ -81,7 +81,7 @@ void swiftToJavaHandler(ffi_cif* cif, void* result, void** args, void* user) {
     ATTACH_ENV();
 
     // Build cache if needed
-    buildInfos(env, info->method, true, &info->paramInfos, &info->returnInfo, NULL, NULL, NULL, true);
+    buildInfos(env, info->method, true, &info->paramInfos, &info->returnInfo, NULL, NULL, NULL, true, info->isProtocolCall);
 
     void* jargs[3];
     jargs[0] = &env;

@@ -1,11 +1,10 @@
 package org.moe.swift.test;
 
 import org.junit.jupiter.api.Test;
+import org.moe.natj.swift.SwiftRuntime;
 import org.moe.swift.test.bindings.Global;
-import org.moe.swift.test.bindings.protocolTests.ClassConformingProtocol;
-import org.moe.swift.test.bindings.protocolTests.SmallStructConformingProtocol;
-import org.moe.swift.test.bindings.protocolTests.StructConformingProtocol;
-import org.moe.swift.test.bindings.protocolTests.TestProtocol;
+import org.moe.swift.test.bindings.JavaSideSubClass;
+import org.moe.swift.test.bindings.protocolTests.*;
 
 import java.lang.reflect.Proxy;
 
@@ -82,4 +81,18 @@ public class SwiftProtocolTest extends BaseSwiftTest {
         assertEquals(11, Global.passBackUnknownProtocol(testProtocol));
     }
 
+    @Test
+    public void testPassJavaSideProtocol() {
+        JavaSideProtocol javaSideProtocol = new JavaSideProtocol();
+        assertEquals(77, javaSideProtocol.protoFunc());
+        assertEquals(77, Global.passBackUnknownProtocol(javaSideProtocol));
+    }
+
+    @Test
+    public void testPassJavaSideSubClassConformingToProtocol() {
+        JavaSideSubClass javaSideProtocol = new JavaSideSubClass();
+        assertEquals(SwiftRuntime.getMetadataForClass(javaSideProtocol.getClass()), SwiftRuntime.dereferencePeer(javaSideProtocol.getPeerPointer()));
+        assertEquals(122, javaSideProtocol.protoFunc());
+        assertEquals(122, Global.passBackUnknownProtocol(javaSideProtocol));
+    }
 }

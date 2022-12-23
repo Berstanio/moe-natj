@@ -6,9 +6,10 @@ import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
 import org.moe.natj.swift.ann.VirtualSwiftMethod;
+import org.moe.swift.test.bindings.protocolTests.TestProtocol;
 
 @Runtime(SwiftRuntime.class)
-public class JavaSideSubClass extends BaseClass {
+public class JavaSideSubClass extends BaseClass implements TestProtocol {
 
     static {
         NatJ.register();
@@ -36,4 +37,10 @@ public class JavaSideSubClass extends BaseClass {
 
     @StaticSwiftMethod(symbol = "$s9swiftTest26globalReturnBaseClassAgainyAA0eF0CADF")
     public static native BaseClass returnBaseClassAgain(BaseClass baseClass);
+
+    @Override
+    @VirtualSwiftMethod(offset = 8)
+    public long protoFunc() {
+        return 122;
+    }
 }

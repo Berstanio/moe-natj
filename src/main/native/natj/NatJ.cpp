@@ -398,7 +398,7 @@ void JNICALL Java_org_moe_natj_general_NatJ_initialize(JNIEnv* env, jclass clazz
       "Ljava/lang/Class;"
       "Ljava/lang/annotation/Annotation;"  // Annotaion marked with @Callable
       "Ljava/lang/Object;"
-      "ZZZ)"
+      "ZZZZ)"
       "Lorg/moe/natj/general/NatJ$JavaObjectConstructionInfo;");
   gGetMappedMethod =
       env->GetMethodID(gMappedClass, "value", "()Ljava/lang/Class;");
@@ -831,7 +831,7 @@ void setCachedFFIType(JNIEnv* env, jclass type, ffi_type* cType) {
                           reinterpret_cast<jlong>(cType));
 }
     
-jobject constructInfoForJClass(JNIEnv* env, jclass clazz, jobjectArray paramAnns, jobject runtime, bool toJava, bool forceByValue = false) {
+jobject constructInfoForJClass(JNIEnv* env, jclass clazz, jobjectArray paramAnns, jobject runtime, bool toJava, bool forceByValue = false, bool unpackAsEC = false) {
     jsize annCount = paramAnns == NULL ? 0 : env->GetArrayLength(paramAnns);
     jobject mappedType = NULL;
     jobject callable = NULL;
@@ -861,7 +861,7 @@ jobject constructInfoForJClass(JNIEnv* env, jclass clazz, jobjectArray paramAnns
     
     if (toJava) {
       return env->NewGlobalRef(env->CallStaticObjectMethod(
-          gNatJClass, gBuildJavaObjectInfoStaticMethod, runtime, clazz, mappedType, callable, referenceInfo, owned, byValue, true));
+          gNatJClass, gBuildJavaObjectInfoStaticMethod, runtime, clazz, mappedType, callable, referenceInfo, owned, byValue, true, unpackAsEC));
     } else {
       return env->NewGlobalRef(env->CallStaticObjectMethod(
           gNatJClass, gBuildNativeObjectInfoStaticMethod, runtime, clazz, mappedType, callable, owned, byValue, true));
@@ -871,7 +871,7 @@ jobject constructInfoForJClass(JNIEnv* env, jclass clazz, jobjectArray paramAnns
 
 void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
                 jobject* returnInfo, int8_t* variadic, size_t* ptrBuff,
-                size_t* ptrCount, bool addCallerObject) {
+                size_t* ptrCount, bool addCallerObject, bool unpackCallerAsEC) {
   // Get default runtime
   jobject runtime = NULL;
   {
@@ -946,7 +946,7 @@ void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
       } else {
         *returnInfo = env->NewGlobalRef(env->CallStaticObjectMethod(
             gNatJClass, gBuildJavaObjectInfoStaticMethod, runtime, returnType,
-            mappedType, callable, referenceInfo, owned, byValue, false));
+            mappedType, callable, referenceInfo, owned, byValue, false, false));
       }
     } else {
       *returnInfo = NULL;
@@ -982,7 +982,7 @@ void buildInfos(JNIEnv* env, jobject method, bool toJava, jobject** paramInfos,
     infos.reserve(parameterCount + addCallerObject);
     if(addCallerObject) {
         jclass cls = (jclass)env->CallObjectMethod(method, gGetMethodDeclaringClassMethod);
-        infos.push_back(constructInfoForJClass(env, cls, NULL, runtime, toJava, env->CallBooleanMethod(cls, gIsAnnotationPresentMethod, gStructureClass)));
+        infos.push_back(constructInfoForJClass(env, cls, NULL, runtime, toJava, env->CallBooleanMethod(cls, gIsAnnotationPresentMethod, gStructureClass), unpackCallerAsEC));
     }
     for (jsize i = 0; i < parameterCount; i++) {
       env->PushLocalFrame(20);

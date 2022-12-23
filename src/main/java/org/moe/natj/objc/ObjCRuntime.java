@@ -279,7 +279,7 @@ public class ObjCRuntime extends NativeRuntime {
         JavaObjectConstructionInfo toObjCObjectInfo =
                 NatJ.buildJavaObjectConstructionInfo(
                         NatJ.getOrCreateInstanceOfRuntimeClass(ObjCRuntime.class), cls, null, null,
-                        null, true, false, false);
+                        null, true, false, false, false);
 
         return (T) NatJ.toJava(proxyPeer, toObjCObjectInfo);
     }
@@ -322,7 +322,7 @@ public class ObjCRuntime extends NativeRuntime {
         JavaObjectConstructionInfo toObjCObjectInfo =
                 NatJ.buildJavaObjectConstructionInfo(
                         NatJ.getOrCreateInstanceOfRuntimeClass(ObjCRuntime.class), cls, null, null,
-                        null, true, false, false);
+                        null, true, false, false, false);
 
         return (T) NatJ.toJava(proxyPeer, toObjCObjectInfo);
     }
@@ -340,7 +340,7 @@ public class ObjCRuntime extends NativeRuntime {
         JavaObjectConstructionInfo toObjCObjectInfo =
                 NatJ.buildJavaObjectConstructionInfo(
                         NatJ.getOrCreateInstanceOfRuntimeClass(ObjCRuntime.class), cls, null, null,
-                        null, false, false, false);
+                        null, false, false, false, false);
 
         return (T) NatJ.toJava(ptr.getPeer().getPeer(), toObjCObjectInfo);
     }
@@ -357,7 +357,7 @@ public class ObjCRuntime extends NativeRuntime {
     public static <T extends OpaquePtr> T cast(ObjCObject obj, java.lang.Class<T> cls) {
         JavaObjectConstructionInfo toOpqquePtrInfo =
                 NatJ.buildJavaObjectConstructionInfo(null, cls, null, null, null, false, false,
-                        false);
+                        false, false);
 
         return (T) NatJ.toJava(obj.getPeer().getPeer(), toOpqquePtrInfo);
     }

@@ -71,7 +71,7 @@ abstract class AbstractNativeObjectPtr<T> extends AbstractTypedPtr<T, T> {
         try {
             if (toJavaInfo == null) {
                 toJavaInfo = NatJ.buildJavaObjectConstructionInfo(runtime, type, null, null, type,
-                        owned, false, true);
+                        owned, false, true, false);
             }
             return (T) NatJ.toJava(peer, toJavaInfo);
         } catch (Exception ex) {

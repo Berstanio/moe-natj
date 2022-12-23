@@ -953,6 +953,8 @@ public class NatJ {
 
         /** Specifies which mapper to use. */
         public Mapper mapper;
+
+        public boolean unpackAsEC = false;
     }
 
     /**
@@ -1075,7 +1077,7 @@ public class NatJ {
     public static JavaObjectConstructionInfo buildJavaObjectConstructionInfo(
             NativeRuntime defaultRuntime, Class<?> type,
             Class<?> mapperClass, Annotation callback, Object typeInfo, boolean owned,
-            boolean byvalue, boolean arg) {
+            boolean byvalue, boolean arg, boolean unpackAsEC) {
         JavaObjectConstructionInfo info = new JavaObjectConstructionInfo();
         info.owned = owned;
         info.arg = arg;
@@ -1083,6 +1085,7 @@ public class NatJ {
         info.callback = callback;
         info.data = null;
         info.byvalue = byvalue;
+        info.unpackAsEC = unpackAsEC;
 
         if (ConstVoidPtr.class.isAssignableFrom(type)) {
             info.ref = true;

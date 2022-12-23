@@ -140,7 +140,7 @@ public class SwiftObjectMapper implements Mapper {
     public Object toJava(long instance, NatJ.JavaObjectConstructionInfo info) {
         try {
             synchronized (info) {
-                boolean isProtocolReturn = info.type.isAnnotationPresent(SwiftProtocol.class);
+                boolean isProtocolReturn = info.type.isAnnotationPresent(SwiftProtocol.class) || info.unpackAsEC;
                 if (isProtocolReturn) {
                     return constructJavaObjectForProxy(instance, info);
                 } else {
