@@ -1,10 +1,12 @@
 package org.moe.natj.swift;
 
+import org.moe.natj.c.ann.Structure;
 import org.moe.natj.c.ann.Variadic;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeRuntime;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
+import org.moe.natj.swift.ann.SwiftBindingClass;
 import org.moe.natj.swift.ann.SwiftProtocol;
 import org.moe.natj.swift.map.SwiftObjectMapper;
 import org.moe.natj.swift.map.SwiftStringMapper;
@@ -52,6 +54,7 @@ public class SwiftRuntime extends NativeRuntime {
     @Override
     protected void doRegistration(Class<?> type) {
         registerClass(type);
+        if (!type.isAnnotationPresent(SwiftBindingClass.class) && !type.isAnnotationPresent(Structure.class)) return;
         try {
             // TODO: 07.12.22 Solve better. Maybe a SwiftClass annotation? Or a SwiftMetadataType anno?
             Method method = type.getDeclaredMethod("getType");
@@ -59,7 +62,7 @@ public class SwiftRuntime extends NativeRuntime {
             Long peer = (Long) method.invoke(null);
             registerMetadataPointer(type, peer);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            System.err.println("No getType for " + type.getName());
+            System.err.println("No getType for " + type.getName() + ", but is is either SwiftStruct or a SwiftBindingClass");
         }
     }
 
