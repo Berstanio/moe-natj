@@ -424,8 +424,6 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         }
 
         if (!isNative && isInherited) {
-            // We need to deal with that later, after the all native methods got registered. Since atm we still need the metadata type pointer
-            // If we are can later generate metadata for ourselves, we can do that directly here, which would be very convinient
             registerJavaMethod(env, type, method, metadataPointer, offset, isClass);
             continue;
         } else {
