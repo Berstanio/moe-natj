@@ -5,12 +5,11 @@ import org.moe.natj.c.ann.Variadic;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeRuntime;
 import org.moe.natj.general.ann.Runtime;
-import org.moe.natj.swift.ann.StaticSwiftMethod;
-import org.moe.natj.swift.ann.SwiftBindingClass;
-import org.moe.natj.swift.ann.SwiftProtocol;
+import org.moe.natj.swift.ann.*;
 import org.moe.natj.swift.map.SwiftObjectMapper;
 import org.moe.natj.swift.map.SwiftStringMapper;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -26,6 +25,8 @@ public class SwiftRuntime extends NativeRuntime {
 
     private static HashMap<Class<?>, Long> classProtocolDescriptorMap = new HashMap<>();
     private static HashMap<Long, HashMap<Class<?>, Long>> typeToClassWitnessTableMapMap = new HashMap<>();
+
+    private static HashMap<Class<? extends SwiftEnumObject>, HashMap<Byte, Class<? extends SwiftEnumObject>>> enumToOrdinalCaseMapMap = new HashMap<>();
 
     static {
         NatJ.registerRuntime(SwiftRuntime.class);
@@ -54,7 +55,23 @@ public class SwiftRuntime extends NativeRuntime {
     @Override
     protected void doRegistration(Class<?> type) {
         registerClass(type);
-        if (!type.isAnnotationPresent(SwiftBindingClass.class) && !type.isAnnotationPresent(Structure.class)) return;
+        if (!type.isAnnotationPresent(SwiftBindingClass.class) && !type.isAnnotationPresent(Structure.class) && !type.isAnnotationPresent(SwiftEnum.class)) return;
+        if (type.isAnnotationPresent(SwiftEnumCase.class)) return;
+        // We can't wait for the cases to register, because maybe they wont because they are never referenced
+        if (type.isAnnotationPresent(SwiftEnum.class)) {
+            for (Class<?> c : type.getDeclaredClasses()) {
+                if (!c.isAnnotationPresent(SwiftEnumCase.class)) continue;
+                try {
+                    byte ordinal = c.getDeclaredAnnotation(SwiftEnumCase.class).ordinal();
+                    SwiftRuntime.registerEnumCase((Class<? extends SwiftEnumObject>) c, ordinal);
+                    Field field = c.getDeclaredField("__ordinal");
+                    field.setAccessible(true);
+                    field.set(null, ordinal);
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    System.err.println("Class " + c.getName() + " has no __ordinal field. The SwiftCase won't work.");
+                }
+            }
+        }
         try {
             // TODO: 07.12.22 Solve better. Maybe a SwiftClass annotation? Or a SwiftMetadataType anno?
             Method method = type.getDeclaredMethod("getType");
@@ -149,9 +166,25 @@ public class SwiftRuntime extends NativeRuntime {
         return classToWitnessTable.computeIfAbsent(type, k -> fetchWitnessTable(metadata, classProtocolDescriptorMap.get(k)));
     }
 
+    public static void registerEnumCase(Class<? extends SwiftEnumObject> swiftCase, byte ordinal){
+        enumToOrdinalCaseMapMap
+                .computeIfAbsent((Class<? extends SwiftEnumObject>) swiftCase.getEnclosingClass(), aClass -> new HashMap<>())
+                .put(ordinal, swiftCase);
+    }
+
+    public static Class<? extends SwiftEnumObject> getEnumCase(Class<? extends SwiftEnumObject> swiftEnum, byte ordinal){
+        return enumToOrdinalCaseMapMap.get(swiftEnum).get(ordinal);
+    }
+
     // TODO: 07.12.22 Weeeell, this is silly, since it isn't a swift method... But since the conventions are so similar, it works
     @StaticSwiftMethod(symbol = "dereferencePeer")
     public static native long dereferencePeer(long peer);
+
+    @StaticSwiftMethod(symbol = "setAtOffset")
+    public static native long setAtOffset(long peer, long offset, byte toSet);
+
+    @StaticSwiftMethod(symbol = "getAtOffset")
+    public static native byte getAtOffset(long peer, long offset);
 
     @StaticSwiftMethod(symbol = "swift_retain")
     public static native void retain(long peer);

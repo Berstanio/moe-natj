@@ -9,8 +9,10 @@ import org.moe.natj.general.Pointer;
 import org.moe.natj.general.ptr.LongPtr;
 import org.moe.natj.general.ptr.impl.PtrFactory;
 import org.moe.natj.swift.ProtocolProxyHandler;
+import org.moe.natj.swift.SwiftEnumObject;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.SwiftBindingClass;
+import org.moe.natj.swift.ann.SwiftEnum;
 import org.moe.natj.swift.ann.SwiftProtocol;
 
 import java.lang.reflect.Constructor;
@@ -147,6 +149,9 @@ public class SwiftObjectMapper implements Mapper {
                     Class<?> toInstance = info.type;
                     if (!isStruct(toInstance)) {
                         toInstance = SwiftRuntime.getClassForPeer(instance);
+                    } else if (info.type.isAnnotationPresent(SwiftEnum.class)) {
+                        byte ordinal = SwiftRuntime.getAtOffset(instance, info.type.getAnnotation(SwiftEnum.class).size());
+                        toInstance = SwiftRuntime.getEnumCase((Class<? extends SwiftEnumObject>) info.type, ordinal);
                     }
                     return constructJavaObjectWithConstructor(instance, toInstance, info);
                 }

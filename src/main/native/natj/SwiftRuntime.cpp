@@ -11,9 +11,11 @@ jclass gSwiftStaticMethod = NULL;
 jclass gSwiftConstructor = NULL;
 jclass gSwiftVirtualMethod = NULL;
 jclass gSwiftBindingClass = NULL;
+jclass gSwiftEnumClass = NULL;
 
 jmethodID gSwiftMethodSymbolMethod = NULL;
 jmethodID gSwiftProtocolDescriptorMethod = NULL;
+jmethodID gSwiftEnumSizeMethod = NULL;
 
 jmethodID gSwiftMethodOffsetMethod = NULL;
 jmethodID gSwiftRuntimeRegisterProtocol = NULL;
@@ -100,9 +102,11 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
 
     gSwiftConstructor = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftConstructor"));
     gSwiftBindingClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftBindingClass"));
+    gSwiftEnumClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftEnum"));
 
     gSwiftMethodSymbolMethod = env->GetMethodID(gSwiftStaticMethod, "symbol", "()Ljava/lang/String;");
     gSwiftMethodOffsetMethod = env->GetMethodID(gSwiftVirtualMethod, "offset", "()J");
+    gSwiftEnumSizeMethod = env->GetMethodID(gSwiftEnumClass, "size", "()J");
     env->PopLocalFrame(NULL);
     protocolMap = new std::unordered_map<jmethodID, ToNativeCallInfo*>();
 }
@@ -177,7 +181,7 @@ void* generateClassMetadataPointer(JNIEnv* env, jclass type, bool* isClass) {
     return newMetadata;
 }
 
-void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStatic, bool isStructure, bool isProtocolClass, void* fnPtr, uint64_t offset) {
+void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStatic, bool isStructureOrEnum, bool isProtocolClass, void* fnPtr, uint64_t offset) {
 
     jobjectArray parametersJava = (jobjectArray)env->CallObjectMethod(method, gGetParameterTypesMethod);
     jsize parameterCount = env->GetArrayLength(parametersJava);
@@ -189,8 +193,8 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
     bool needsStructRewrite = false;
 
     if (!isStatic) {
-        parametersSwift[0] = getFFIType(env, type, isStructure);
-        needsStructRewrite = isStructure && parametersSwift[0]->size <= 32;
+        parametersSwift[0] = getFFIType(env, type, isStructureOrEnum);
+        needsStructRewrite = isStructureOrEnum && parametersSwift[0]->size <= 32;
     }
 
     ffi_type** parametersFFI = new ffi_type*[parameterCount + 2];
@@ -363,15 +367,51 @@ void registerJavaMethod(JNIEnv* env, jclass type, jobject method, void* metadata
     }
 }
 
+extern "C" void setAtOffset(void* pointer, uint64_t offset, uint8_t toSet) {
+    set_at_offset(pointer, uint8_t, offset, toSet);
+}
+
+extern "C" char getAtOffset(void* pointer, uint64_t offset) {
+    return *(char*)get_at_offset(pointer, offset);
+}
+
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type) {
     jobjectArray methods = (jobjectArray)env->CallObjectMethod(type, gGetDeclaredMethodsMethod);
     jsize length = env->GetArrayLength(methods);
 
     bool isStructure = env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gStructureClass);
+    jobject swiftEnumAnnotation = env->CallObjectMethod(type, gGetAnnotationMethod, gSwiftEnumClass);
+    bool isEnum = swiftEnumAnnotation != NULL;
     jobject protocolClassAnnotation = env->CallObjectMethod(type, gGetAnnotationMethod, gSwiftProtocolAnnotationClass);
     bool isProtocolClass = protocolClassAnnotation != NULL;
     if (isStructure) {
         Java_org_moe_natj_c_CRuntime_registerClass(env, clazz, type);
+    }
+    
+    if (isEnum) {
+        jlong size = env->CallLongMethod(swiftEnumAnnotation, gSwiftEnumSizeMethod);
+        
+        ffi_type* ret = new ffi_type;
+        ret->type = FFI_TYPE_STRUCT;
+        ret->size = size + 1; // size + ordinal field
+        ret->alignment = 1; // The align macro fails with a alignment of 0
+        long long count = (size - (size % 8)) / 8;
+        if (size % 8 != 0) count++; // Properly set a field to fill size perfectly
+        if (count == 0) {
+            ret->elements = new ffi_type*[3];
+            ret->elements[2] = NULL;
+            ret->elements[1] = &ffi_type_uint8;
+            ret->elements[0] = &ffi_type_sint8;// TODO: Find correct one based on size
+            LOGW << "Warning: This is not implemented yet. Expect misbehavior";
+        } else {
+            ret->elements = new ffi_type*[count + 2];
+            ret->elements[count] = &ffi_type_uint8; // ordinal
+            ret->elements[count + 1] = NULL;
+            for (int i = 0; i < count; i++) {
+                ret->elements[i] = &ffi_type_uint64;
+            }
+        }
+        setCachedFFIType(env, type, ret);
     }
 
     if (isProtocolClass) {
@@ -427,7 +467,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
             registerJavaMethod(env, type, method, metadataPointer, offset, isClass);
             continue;
         } else {
-            registerNativeMethod(env, type, method, isStatic, isStructure, isProtocolClass, symbol, offset);
+            registerNativeMethod(env, type, method, isStatic, isStructure || isEnum, isProtocolClass, symbol, offset);
         }
     }
 }
