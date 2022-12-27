@@ -25,15 +25,16 @@ public class SwiftStringMapper implements Mapper {
 
     @Override
     public Object toJava(long instance, NatJ.JavaObjectConstructionInfo info) {
-        // TODO: 18.12.22 WHAT THE FUCK? Whyy??
-        CRuntime.createJavaString(createCString(new SwiftString(new Pointer(instance))));
-        return CRuntime.createJavaString(createCString(new SwiftString(new Pointer(instance))));
+        long peer = createCString(new SwiftString(new Pointer(instance)));
+        String javaString = CRuntime.createJavaString(peer);
+        CRuntime.free(peer);
+        return javaString;
     }
 
     @StaticSwiftMethod(symbol = "$sSS7cStringSSSPys5UInt8VG_tcfC")
     @ByValue
     public static native SwiftString createSwiftString(long string);
 
-    @StaticSwiftMethod(symbol = "$s4natj13createCStringySpys4Int8VGSSF")
+    @StaticSwiftMethod(symbol = "$s4natj13createCStringySRys4Int8VGSSF")
     public static native long createCString(@ByValue SwiftString struct);
 }

@@ -160,13 +160,14 @@ void* generateClassMetadataPointer(JNIEnv* env, jclass type, bool* isClass) {
     // offset 32 => some data (__DATA__) + 2
     size_t dataSize = 9 * 8;
     void* data = malloc(dataSize); // Seems to be fixed size
-    memcpy(data, *(void**)get_at_offset(newMetadata, 32), dataSize);
+    void* oldData = *(void**)get_at_offset(closestMetadata, 32);
+    //memcpy(data, oldData, dataSize);
     jstring className = (jstring)env->CallObjectMethod(type, gGetClassNameMethod);
     const char* classNameC = env->GetStringUTFChars(className, NULL);
     set_at_offset(data, const char*, 24, classNameC);
     set_at_offset(data, uintptr_t, 48, 0);
 
-    set_at_offset(newMetadata, void*, 32, data);
+    //set_at_offset(newMetadata, void*, 32, data);
     // offset 64 => nominal type descriptor
 
     // Create PWT's

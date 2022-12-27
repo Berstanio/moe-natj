@@ -27,7 +27,7 @@ task compileSwift(type: Exec) {
         mkdir "$buildDir/swift/"
     }
     workingDir file("src/test/native")
-    commandLine = ["swiftc"] + swiftFiles + ["-emit-library", "-g", "-o", "$buildDir/swift/libswiftTest.dylib"]
+    commandLine = ["swiftc"] + swiftFiles + ["-emit-library", "-g", "-sanitize=address", "-o", "$buildDir/swift/libswiftTest.dylib"]
 }
 
 task getSymbols(type: Exec) {

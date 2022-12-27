@@ -583,7 +583,7 @@ void JNICALL Java_org_moe_natj_general_NatJ_initialize(JNIEnv* env, jclass clazz
     for (int i = 0; i < 2; i++) {
         swiftStringFields[i] = &ffi_type_uint64;
     }
-    swiftStringFields[3] = NULL;
+    swiftStringFields[2] = NULL;
     swiftType->elements = swiftStringFields;
     swiftString = swiftType;
 #endif
