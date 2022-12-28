@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.moe.swift.test.bindings.LargeTestEnum;
 import org.moe.swift.test.bindings.TestEnum;
 
-public class EnumTest extends BaseSwiftTest {
+public class SwiftEnumTest extends BaseSwiftTest {
 
     @Test
     public void testRetrieveEnum() {
