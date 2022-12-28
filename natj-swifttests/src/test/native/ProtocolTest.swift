@@ -44,6 +44,46 @@ public struct SmallStructConformingProtocol : TestProtocol {
     }
 }
 
+public enum TestEnumConformingProtocol : TestProtocol {
+    case EmptyTestCase
+    case NotEmptyTestCase(Int)
+    case SecondTestCase(Int)
+    case FloatTestCase(Float)
+
+    public func protoFunc() -> Int {
+        switch self {
+            case .EmptyTestCase:
+                return 1
+            case .NotEmptyTestCase(let n):
+                return n
+            case .SecondTestCase(let n):
+                return n
+            case .FloatTestCase(let n):
+                return Int(n)
+        }
+    }
+}
+
+public enum LargeTestEnumConformingProtocol : TestProtocol {
+    case EmptyTestCase
+    case NotEmptyTestCase(Int)
+    case SecondTestCase(Int, Int)
+    case LargeTestCase(Int, Int, Int, Int, Int)
+
+    public func protoFunc() -> Int {
+        switch self {
+            case .EmptyTestCase:
+                return 1
+            case .NotEmptyTestCase(let n):
+                return n
+            case .SecondTestCase(let n1, let n2):
+                return n1 + n2
+            case .LargeTestCase(let n1, let n2, let n3, let n4, let n5):
+                return n1 + n2 + n3 + n4 + n5
+        }
+    }
+}
+
 public func getClassAsProtocol() -> TestProtocol {
     return ClassConformingProtocol()
 }
@@ -62,4 +102,12 @@ public func passBackUnknownProtocol(_ par1: TestProtocol) -> Int {
 
 public func getSmallStructAsProtocol() -> TestProtocol {
     return SmallStructConformingProtocol()
+}
+
+public func getTestEnumAsProtocol() -> TestProtocol {
+    return TestEnumConformingProtocol.SecondTestCase(15)
+}
+
+public func getLargeTestEnumAsProtocol() -> TestProtocol {
+    return LargeTestEnumConformingProtocol.SecondTestCase(15, 20)
 }

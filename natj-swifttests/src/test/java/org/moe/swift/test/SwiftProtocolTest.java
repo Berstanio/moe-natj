@@ -95,4 +95,45 @@ public class SwiftProtocolTest extends BaseSwiftTest {
         assertEquals(122, javaSideProtocol.protoFunc());
         assertEquals(122, Global.passBackUnknownProtocol(javaSideProtocol));
     }
+
+    @Test
+    public void testProtocolReturnKnownEnumBinding() {
+        TestProtocol testProtocol = TestEnumConformingProtocol.getEnumAsProtocol();
+        assertEquals(TestEnumConformingProtocol.SecondTestCase.class, testProtocol.getClass());
+        assertEquals(15, ((TestEnumConformingProtocol.SecondTestCase) testProtocol).getField1());
+        assertEquals(15, testProtocol.protoFunc());
+    }
+
+    @Test
+    public void testProtocolPassKnownEnumBinding() {
+        TestProtocol testProtocol = TestEnumConformingProtocol.getEnumAsProtocol();
+        assertEquals(TestEnumConformingProtocol.SecondTestCase.class, testProtocol.getClass());
+        assertEquals(15, testProtocol.protoFunc());
+        assertEquals(15, Global.passBackUnknownProtocol(testProtocol));
+
+        TestProtocol proto2 = new TestEnumConformingProtocol.NotEmptyTestCase(7);
+        assertEquals(7, proto2.protoFunc());
+        assertEquals(7, Global.passBackUnknownProtocol(proto2));
+    }
+
+    @Test
+    public void testProtocolReturnKnownLargeEnumBinding() {
+        TestProtocol testProtocol = LargeTestEnumConformingProtocol.getEnumAsProtocol();
+        assertEquals(LargeTestEnumConformingProtocol.SecondTestCase.class, testProtocol.getClass());
+        assertEquals(15, ((LargeTestEnumConformingProtocol.SecondTestCase) testProtocol).getField1());
+        assertEquals(20, ((LargeTestEnumConformingProtocol.SecondTestCase) testProtocol).getField2());
+        assertEquals(35, testProtocol.protoFunc());
+    }
+
+    @Test
+    public void testProtocolPassKnownLargeEnumBinding() {
+        TestProtocol testProtocol = LargeTestEnumConformingProtocol.getEnumAsProtocol();
+        assertEquals(LargeTestEnumConformingProtocol.SecondTestCase.class, testProtocol.getClass());
+        assertEquals(35, testProtocol.protoFunc());
+        assertEquals(35, Global.passBackUnknownProtocol(testProtocol));
+
+        TestProtocol proto2 = new LargeTestEnumConformingProtocol.LargeTestCase(7, 3, 2, 8, 5);
+        assertEquals(25, proto2.protoFunc());
+        assertEquals(25, Global.passBackUnknownProtocol(proto2));
+    }
 }

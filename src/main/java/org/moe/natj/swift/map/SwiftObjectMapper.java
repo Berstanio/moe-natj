@@ -30,8 +30,9 @@ public class SwiftObjectMapper implements Mapper {
         boolean copyStruct = false;
         long size = 0;
         if (isStruct(instance.getClass())) {
-            metadata = SwiftRuntime.getMetadataForClass(instance.getClass());
-            size = CRuntime.sizeOfNativeObject((Class<? extends NativeObject>) instance.getClass());
+            Class<?> toCheck = isEnum(instance.getClass()) ? instance.getClass().getEnclosingClass() : instance.getClass();
+            metadata = SwiftRuntime.getMetadataForClass(toCheck);
+            size = CRuntime.sizeOfNativeObject((Class<? extends NativeObject>) toCheck);
             if (size <= 24) {
                 copyStruct = true;
             } else {
@@ -88,6 +89,10 @@ public class SwiftObjectMapper implements Mapper {
         return StructObject.class.isAssignableFrom(aClass);
     }
 
+    private boolean isEnum(Class<?> aClass) {
+        return SwiftEnumObject.class.isAssignableFrom(aClass);
+    }
+
     public Object constructJavaObjectWithConstructor(long instance, Class<?> toInstantiate, NatJ.JavaObjectConstructionInfo info) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Constructor<?> constructor;
 
@@ -113,6 +118,11 @@ public class SwiftObjectMapper implements Mapper {
         return javaObject;
     }
 
+    private Class<? extends SwiftEnumObject> getCaseForEnum(Class<?> enumClass, long peer) {
+        byte ordinal = SwiftRuntime.getAtOffset(peer, enumClass.getAnnotation(SwiftEnum.class).size());
+        return SwiftRuntime.getEnumCase((Class<? extends SwiftEnumObject>) enumClass, ordinal);
+    }
+
     public Object constructJavaObjectForProxy(long instance, NatJ.JavaObjectConstructionInfo info) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         // Look at definition of existential container, to see where the 24 comes from
         // 3 * value, 1 * metadata, 1 * pwt
@@ -130,6 +140,10 @@ public class SwiftObjectMapper implements Mapper {
                 long struct = CRuntime.malloc(size);
                 CRuntime.memcpy(struct, instance, (int) size);
                 instance = struct;
+            }
+
+            if (isEnum(classForInstance)) {
+                classForInstance = getCaseForEnum(classForInstance, instance);
             }
         } else {
             instance = SwiftRuntime.dereferencePeer(instance);
@@ -149,9 +163,8 @@ public class SwiftObjectMapper implements Mapper {
                     Class<?> toInstance = info.type;
                     if (!isStruct(toInstance)) {
                         toInstance = SwiftRuntime.getClassForPeer(instance);
-                    } else if (info.type.isAnnotationPresent(SwiftEnum.class)) {
-                        byte ordinal = SwiftRuntime.getAtOffset(instance, info.type.getAnnotation(SwiftEnum.class).size());
-                        toInstance = SwiftRuntime.getEnumCase((Class<? extends SwiftEnumObject>) info.type, ordinal);
+                    } else if (isEnum(toInstance)) {
+                        toInstance = getCaseForEnum(toInstance, instance);
                     }
                     return constructJavaObjectWithConstructor(instance, toInstance, info);
                 }

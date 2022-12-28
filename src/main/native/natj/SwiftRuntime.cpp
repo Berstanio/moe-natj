@@ -425,7 +425,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
         env->CallStaticVoidMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterProtocol, type, (jlong)witnessTable);
     }
 
-    bool isInherited = !env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gSwiftBindingClass) && !isProtocolClass && !isStructure && env->IsAssignableFrom(type, gNativeObjectClass);
+    bool isInherited = !env->CallBooleanMethod(type, gIsAnnotationPresentMethod, gSwiftBindingClass) && !isProtocolClass && !isEnum && !isStructure && env->IsAssignableFrom(type, gNativeObjectClass);
     void* metadataPointer = NULL;
     bool isClass = true;
     if (isInherited) {
