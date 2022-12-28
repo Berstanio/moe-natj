@@ -118,14 +118,14 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
     (void*)(((uintptr_t)(ptr) + (offset)))
 
 void createPWTForDirectClass(JNIEnv* env, jclass type, void* metadata) {
-    jobjectArray interfaces = (jobjectArray) env->CallObjectMethod(type, gGetClassInterfacesMethod);
+    jobjectArray interfaces = (jobjectArray)env->CallObjectMethod(type, gGetClassInterfacesMethod);
     jsize interfaceCount = env->GetArrayLength(interfaces);
     for (jsize i = 0; i < interfaceCount; i++) {
-        jclass interface = (jclass) env->GetObjectArrayElement(interfaces, i);
+        jclass interface = (jclass)env->GetObjectArrayElement(interfaces, i);
         jobjectArray methods = (jobjectArray)env->CallObjectMethod(interface, gGetDeclaredMethodsMethod);
         jsize length = env->GetArrayLength(methods);
         void* pwt = malloc(length * 8 + 8);
-        env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterPWT, (jlong) metadata, interface, (jlong) pwt);
+        env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterPWT, (jlong)metadata, interface, (jlong)pwt);
     }
 }
 
@@ -135,7 +135,7 @@ void* generateEmptyStructMetadataPointer(JNIEnv* env, jclass type) {
     void* vwt = dlsym(RTLD_DEFAULT, "$sytWV");
     set_at_offset(metadata, void*, -8, vwt);
     set_at_offset(metadata, uint64_t, 0, 512);
-    
+
     // Proper implement
     set_at_offset(metadata, void*, 0, NULL);
     return metadata;
@@ -161,24 +161,24 @@ void* generateClassMetadataPointer(JNIEnv* env, jclass type, bool* isClass) {
     size_t dataSize = 9 * 8;
     void* data = malloc(dataSize); // Seems to be fixed size
     void* oldData = *(void**)get_at_offset(closestMetadata, 32);
-    //memcpy(data, oldData, dataSize);
+    // memcpy(data, oldData, dataSize);
     jstring className = (jstring)env->CallObjectMethod(type, gGetClassNameMethod);
     const char* classNameC = env->GetStringUTFChars(className, NULL);
     set_at_offset(data, const char*, 24, classNameC);
     set_at_offset(data, uintptr_t, 48, 0);
 
-    //set_at_offset(newMetadata, void*, 32, data);
-    // offset 64 => nominal type descriptor
+    // set_at_offset(newMetadata, void*, 32, data);
+    //  offset 64 => nominal type descriptor
 
     // Create PWT's
-    jobjectArray interfaces = (jobjectArray) env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeGetAllInheritedInterfaces, type);
+    jobjectArray interfaces = (jobjectArray)env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeGetAllInheritedInterfaces, type);
     jsize interfaceCount = env->GetArrayLength(interfaces);
     for (jsize i = 0; i < interfaceCount; i++) {
-        jclass interface = (jclass) env->GetObjectArrayElement(interfaces, i);
-        void* pwt = (void*) env->CallStaticLongMethod(gSwiftRuntimeClass, gSwiftRuntimeGetPWT, closestMetadata, interface);
-        env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterPWT, (jlong) newMetadata, type, (jlong) pwt);
+        jclass interface = (jclass)env->GetObjectArrayElement(interfaces, i);
+        void* pwt = (void*)env->CallStaticLongMethod(gSwiftRuntimeClass, gSwiftRuntimeGetPWT, closestMetadata, interface);
+        env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterPWT, (jlong)newMetadata, type, (jlong)pwt);
     }
-    
+
     return newMetadata;
 }
 
@@ -326,13 +326,13 @@ void registerJavaMethod(JNIEnv* env, jclass type, jobject method, void* metadata
     info->jniFunction = getJNICallFunction(env, returnToJava, false);
     info->methodId = env->FromReflectedMethod(info->method);
     info->isProtocolCall = false;
-    
+
     ffi_prep_cif_var(&info->cif, FFI_DEFAULT_ABI, 3, parameterCount + 3, returnToJava, parametersToJava);
     ffi_cif* closureCif = new ffi_cif;
     ffi_prep_cif(closureCif, FFI_DEFAULT_ABI, parameterCount + 1, returnSwift, parametersSwift);
 
     closureCif->flags = closureCif->flags | 256;
-    
+
     if (patchMetadata) {
 
         void* code = NULL;
@@ -342,28 +342,27 @@ void registerJavaMethod(JNIEnv* env, jclass type, jobject method, void* metadata
 
         set_at_offset(metadataPointer, void*, offset, code);
     }
-    
+
     // Now also patch the correct pwt and than everything is cool!
-    jobjectArray methods = (jobjectArray) env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeFindOriginMethods, method);
+    jobjectArray methods = (jobjectArray)env->CallStaticObjectMethod(gSwiftRuntimeClass, gSwiftRuntimeFindOriginMethods, method);
     jsize length = env->GetArrayLength(methods);
     for (jsize i = 0; i < length; i++) {
         jobject method = env->GetObjectArrayElement(methods, i);
-        jclass interface = (jclass) env->CallObjectMethod(method, gGetMethodDeclaringClassMethod);
-        void* pwt = (void*) env->CallStaticLongMethod(gSwiftRuntimeClass, gSwiftRuntimeGetPWT, metadataPointer, interface);
+        jclass interface = (jclass)env->CallObjectMethod(method, gGetMethodDeclaringClassMethod);
+        void* pwt = (void*)env->CallStaticLongMethod(gSwiftRuntimeClass, gSwiftRuntimeGetPWT, metadataPointer, interface);
         jobject swiftVirtualMethodAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftVirtualMethod);
         jlong offset = env->CallLongMethod(swiftVirtualMethodAnnotation, gSwiftMethodOffsetMethod);
-        
+
         // TODO: We need different closures here, to differentiate between "called as protocol" and "called as object method", so we can correctly unpack it when converting to java
         ToJavaCallInfo* protocolInfo = new ToJavaCallInfo;
         memcpy(protocolInfo, info, sizeof(ToJavaCallInfo));
         protocolInfo->isProtocolCall = true;
-        
+
         void* code = NULL;
         ffi_closure* closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &code);
 
         ffi_prep_closure_loc(closure, closureCif, swiftToJavaHandler, protocolInfo, code);
-        
-        
+
         set_at_offset(pwt, void*, offset, code);
     }
 }
@@ -388,21 +387,22 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jcl
     if (isStructure) {
         Java_org_moe_natj_c_CRuntime_registerClass(env, clazz, type);
     }
-    
+
     if (isEnum) {
         jlong size = env->CallLongMethod(swiftEnumAnnotation, gSwiftEnumSizeMethod);
-        
+
         ffi_type* ret = new ffi_type;
         ret->type = FFI_TYPE_STRUCT;
         ret->size = size + 1; // size + ordinal field
         ret->alignment = 1; // The align macro fails with a alignment of 0
         long long count = (size - (size % 8)) / 8;
-        if (size % 8 != 0) count++; // Properly set a field to fill size perfectly
+        if (size % 8 != 0)
+            count++; // Properly set a field to fill size perfectly
         if (count == 0) {
             ret->elements = new ffi_type*[3];
             ret->elements[2] = NULL;
             ret->elements[1] = &ffi_type_uint8;
-            ret->elements[0] = &ffi_type_sint8;// TODO: Find correct one based on size
+            ret->elements[0] = &ffi_type_sint8; // TODO: Find correct one based on size
             LOGW << "Warning: This is not implemented yet. Expect misbehavior";
         } else {
             ret->elements = new ffi_type*[count + 2];

@@ -15,7 +15,7 @@ public enum TestEnum {
                 toAdd = n
             case .FloatTestCase(let n):
                 toAdd = Int(n)
-            }
+        }
 
         return toAdd + par1
     }
