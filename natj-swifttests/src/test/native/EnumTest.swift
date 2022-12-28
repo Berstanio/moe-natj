@@ -67,7 +67,6 @@ public func retrieveEnumLarge(_ par1: LargeTestEnum) -> Int {
         case .LargeTestCase(let n1, let n2, let n3, let n4, let n5):
             return n1 + n2 + n3 + n4 + n5
     }
-    return -1
 }
 
 public func retrieveEnum(_ par1: TestEnum) -> Int {
@@ -81,5 +80,4 @@ public func retrieveEnum(_ par1: TestEnum) -> Int {
         case .FloatTestCase(let n):
             return Int(n)
     }
-    return -1
 }
