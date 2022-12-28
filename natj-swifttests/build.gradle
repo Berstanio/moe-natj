@@ -27,7 +27,9 @@ task compileSwift(type: Exec) {
         mkdir "$buildDir/swift/"
     }
     workingDir file("src/test/native")
-    commandLine = ["swiftc"] + swiftFiles + ["-emit-library", "-g", "-sanitize=address", "-o", "$buildDir/swift/libswiftTest.dylib"]
+    def asan = []
+    if (rootProject.hasProperty("moe.use.addresssanitizer")) asan = ["-sanitize=address"]
+    commandLine = ["swiftc"] + swiftFiles + asan + ["-emit-library", "-g", "-o", "$buildDir/swift/libswiftTest.dylib"]
 }
 
 task getSymbols(type: Exec) {
