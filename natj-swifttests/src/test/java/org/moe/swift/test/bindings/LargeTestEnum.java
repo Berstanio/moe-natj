@@ -12,9 +12,9 @@ import org.moe.natj.swift.ann.StaticSwiftMethod;
 import org.moe.natj.swift.ann.SwiftEnum;
 import org.moe.natj.swift.ann.SwiftEnumCase;
 
-@SwiftEnum(size = 8 * 1)
+@SwiftEnum(size = 8 * 5)
 @Runtime(SwiftRuntime.class)
-public abstract class TestEnum extends SwiftEnumObject {
+public abstract class LargeTestEnum extends SwiftEnumObject {
 
     static {
         NatJ.register();
@@ -22,30 +22,30 @@ public abstract class TestEnum extends SwiftEnumObject {
 
     private static long __natjCache;
 
-    protected TestEnum(Pointer peer) {
+    protected LargeTestEnum(Pointer peer) {
         super(peer);
     }
 
-    private TestEnum(byte ordinal) {
-        super(TestEnum.class, ordinal);
+    private LargeTestEnum(byte ordinal) {
+        super(LargeTestEnum.class, ordinal);
     }
 
-    @StaticSwiftMethod(symbol = "$s9swiftTest0B4EnumOMa")
+    @StaticSwiftMethod(symbol = "$s9swiftTest05LargeB4EnumOMa")
     public static native long getType();
 
-    @StaticSwiftMethod(symbol = "$s9swiftTest10returnEnumAA0bD0OyF")
+    @StaticSwiftMethod(symbol = "$s9swiftTest15returnEnumLargeAA0ebD0OyF")
     @ByValue
-    public static native TestEnum getTestEnum();
+    public static native LargeTestEnum getTestEnum();
 
-    @StaticSwiftMethod(symbol = "$s9swiftTest12retrieveEnumySiAA0bD0OF")
-    public static native long passTestEnum(@ByValue TestEnum testEnum);
+    @StaticSwiftMethod(symbol = "$s9swiftTest17retrieveEnumLargeySiAA0ebD0OF")
+    public static native long passTestEnum(@ByValue LargeTestEnum testEnum);
 
-    @StaticSwiftMethod(symbol = "$s9swiftTest0B4EnumO04testC8FunctionyS2iF")
+    @StaticSwiftMethod(symbol = "$s9swiftTest05LargeB4EnumO04testD8FunctionyS2iF")
     public native long testEnumFunction(long value);
 
     @Structure
     @SwiftEnumCase(ordinal = 3)
-    public static class EmptyTestCase extends TestEnum {
+    public static class EmptyTestCase extends LargeTestEnum {
 
         static {
             NatJ.register();
@@ -65,7 +65,7 @@ public abstract class TestEnum extends SwiftEnumObject {
 
     @Structure
     @SwiftEnumCase(ordinal = 0)
-    public static class NotEmptyTestCase extends TestEnum {
+    public static class NotEmptyTestCase extends LargeTestEnum {
 
         static {
             NatJ.register();
@@ -92,7 +92,7 @@ public abstract class TestEnum extends SwiftEnumObject {
 
     @Structure
     @SwiftEnumCase(ordinal = 1)
-    public static class SecondTestCase extends TestEnum {
+    public static class SecondTestCase extends LargeTestEnum {
 
         static {
             NatJ.register();
@@ -105,21 +105,29 @@ public abstract class TestEnum extends SwiftEnumObject {
             super(peer);
         }
 
-        public SecondTestCase(long field1) {
+        public SecondTestCase(long field1, long field2) {
             super(__ordinal);
             setField1(field1);
+            setField2(field2);
         }
 
         @StructureField(order = 0, isGetter = true)
-        private native long getField1();
+        public native long getField1();
 
         @StructureField(order = 0, isGetter = false)
-        private native void setField1(long field1);
+        private native void setField1(long field);
+
+        @StructureField(order = 1, isGetter = true)
+        public native long getField2();
+
+        @StructureField(order = 1, isGetter = false)
+        private native void setField2(long field);
+
     }
 
     @Structure
     @SwiftEnumCase(ordinal = 2)
-    public static class FloatTestCase extends TestEnum {
+    public static class LargeTestCase extends LargeTestEnum {
 
         static {
             NatJ.register();
@@ -128,19 +136,48 @@ public abstract class TestEnum extends SwiftEnumObject {
         private static byte __ordinal;
         private static long __natjCache;
 
-        protected FloatTestCase(Pointer peer) {
+        protected LargeTestCase(Pointer peer) {
             super(peer);
         }
 
-        public FloatTestCase(float field1) {
+        public LargeTestCase(long field1, long field2, long field3, long field4, long field5) {
             super(__ordinal);
             setField1(field1);
+            setField2(field2);
+            setField3(field3);
+            setField4(field4);
+            setField5(field5);
         }
 
         @StructureField(order = 0, isGetter = true)
-        private native float getField1();
+        public native long getField1();
 
         @StructureField(order = 0, isGetter = false)
-        private native void setField1(float field1);
+        private native void setField1(long field1);
+
+        @StructureField(order = 1, isGetter = true)
+        public native long getField2();
+
+        @StructureField(order = 1, isGetter = false)
+        private native void setField2(long field);
+
+        @StructureField(order = 2, isGetter = true)
+        public native long getField3();
+
+        @StructureField(order = 2, isGetter = false)
+        private native void setField3(long field);
+
+        @StructureField(order = 3, isGetter = true)
+        public native long getField4();
+
+        @StructureField(order = 3, isGetter = false)
+        private native void setField4(long field);
+
+        @StructureField(order = 4, isGetter = true)
+        public native long getField5();
+
+        @StructureField(order = 4, isGetter = false)
+        private native void setField5(long field);
+
     }
 }

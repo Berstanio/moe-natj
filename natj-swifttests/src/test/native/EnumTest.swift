@@ -27,8 +27,20 @@ public enum LargeTestEnum {
     case SecondTestCase(Int, Int)
     case LargeTestCase(Int, Int, Int, Int, Int)
 
-    public func getRandomValue() -> Int {
-        return 5
+    public func testEnumFunction(_ par1: Int) -> Int {
+        var toAdd = 0
+        switch self {
+            case .EmptyTestCase:
+                toAdd = 1
+            case .NotEmptyTestCase(let n):
+                toAdd = n
+            case .SecondTestCase(let n1, let n2):
+                toAdd = n1 + n2
+            case .LargeTestCase(let n1, let n2, let n3, let n4, let n5):
+                toAdd = n1 + n2 + n3 + n4 + n5
+        }
+
+        return toAdd + par1
     }
 }
 
@@ -38,6 +50,24 @@ public enum RawTestEnum {
 
 public func returnEnum() -> TestEnum {
     return TestEnum.NotEmptyTestCase(19)
+}
+
+public func returnEnumLarge() -> LargeTestEnum {
+    return LargeTestEnum.SecondTestCase(19, 7)
+}
+
+public func retrieveEnumLarge(_ par1: LargeTestEnum) -> Int {
+    switch par1 {
+        case .EmptyTestCase:
+            return 7
+        case .NotEmptyTestCase(let n):
+            return n
+        case .SecondTestCase(let n1, let n2):
+            return n1 + n2
+        case .LargeTestCase(let n1, let n2, let n3, let n4, let n5):
+            return n1 + n2 + n3 + n4 + n5
+    }
+    return -1
 }
 
 public func retrieveEnum(_ par1: TestEnum) -> Int {
@@ -52,15 +82,4 @@ public func retrieveEnum(_ par1: TestEnum) -> Int {
             return Int(n)
     }
     return -1
-}
-
-public func uffff() -> TestEnum{
-    let a = TestEnum.EmptyTestCase
-    let b = TestEnum.NotEmptyTestCase(5)
-    let c = TestEnum.SecondTestCase(7)
-    let d: TestEnum = TestEnum.FloatTestCase(7.5)
-    //let e = TestEnum.SuperLargeTestCase(2, 3, 4, 5, 6, 7, 8, 9, 10)
-    let f: RawTestEnum = RawTestEnum.test2
-
-    return d
 }
