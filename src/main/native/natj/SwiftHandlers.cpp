@@ -86,7 +86,7 @@ void swiftToJavaHandler(ffi_cif* cif, void* result, void** args, void* user) {
     void* jargs[3];
     jargs[0] = &env;
 
-    jobject* self = (jobject*)malloc(8);
+    jobject* self = (jobject*)alloca(8);
     // Convert self value to Java
     ValueConverter<kToJava>(
         { .env = env,
@@ -132,8 +132,6 @@ void swiftToJavaHandler(ffi_cif* cif, void* result, void** args, void* user) {
                 memcpy(result, values[0], cif->rtype->size);
             });
     }
-
-    free(self);
 
     DETACH_ENV();
 }
