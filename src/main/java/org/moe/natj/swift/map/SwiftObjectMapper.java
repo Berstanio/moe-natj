@@ -112,7 +112,11 @@ public class SwiftObjectMapper implements Mapper {
                 }
             });
         } else {
-             javaObject = constructor.newInstance(new Pointer(instance));
+             if (!isStruct(toInstantiate)) {
+                 javaObject = constructor.newInstance(SwiftRuntime.createStrongPointer(instance, info.owned));
+             } else {
+                 javaObject = constructor.newInstance(CRuntime.createStrongPointer(instance, info.owned));
+             }
         }
 
         return javaObject;

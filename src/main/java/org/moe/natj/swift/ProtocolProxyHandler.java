@@ -1,5 +1,8 @@
 package org.moe.natj.swift;
 
+import org.moe.natj.c.CRuntime;
+import org.moe.natj.general.Pointer;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -13,10 +16,10 @@ public class ProtocolProxyHandler {
 
     public static class ProtocolProxy implements InvocationHandler {
 
-        private final long peer;
+        private final Pointer pointer;
 
         public ProtocolProxy(long peer) {
-            this.peer = peer;
+            this.pointer = CRuntime.createStrongPointer(peer, true);
         }
 
         @Override
@@ -53,7 +56,7 @@ public class ProtocolProxyHandler {
         }
 
         public long getPeer() {
-            return peer;
+            return pointer.getPeer();
         }
     }
 }

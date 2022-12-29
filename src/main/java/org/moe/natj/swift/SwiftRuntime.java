@@ -4,6 +4,7 @@ import org.moe.natj.c.ann.Structure;
 import org.moe.natj.c.ann.Variadic;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeRuntime;
+import org.moe.natj.general.Pointer;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.ann.*;
 import org.moe.natj.swift.map.SwiftClosureMapper;
@@ -190,9 +191,29 @@ public class SwiftRuntime extends NativeRuntime {
 
     public static native long createSwiftClosure(Object o, long info, long cif);
 
+    /**
+     * Creates a strong pointer to an Objective-C object.
+     *
+     * <p>
+     * Retains if doing so is needed to keep the strong ownership.
+     *
+     * @param peer The pointer
+     * @param owned If this is false, the pointer objects will be retained
+     * @return The created {@link Pointer} object
+     */
+    public static Pointer createStrongPointer(long peer, boolean owned) {
+        if (!owned) {
+            SwiftRuntime.retain(peer);
+        }
+        return new Pointer(peer, strongObjectReleaser);
+    }
+
     // TODO: 07.12.22 Weeeell, this is silly, since it isn't a swift method... But since the conventions are so similar, it works
     @StaticSwiftMethod(symbol = "dereferencePeer")
     public static native long dereferencePeer(long peer);
+
+    @StaticSwiftMethod(symbol = "swift_retainCount")
+    public static native long retainCount(long peer);
 
     @StaticSwiftMethod(symbol = "setAtOffset")
     public static native long setAtOffset(long peer, long offset, byte toSet);
@@ -233,4 +254,22 @@ public class SwiftRuntime extends NativeRuntime {
             this.cif = cif;
         }
     }
+
+    /**
+     * Releaser for Swift objects.
+     *
+     * <p>
+     * Will send release message to the pointed object.
+     */
+    private static Pointer.Releaser strongObjectReleaser = new Pointer.Releaser() {
+        @Override
+        public void release(long peer) {
+            SwiftRuntime.release(peer);
+        }
+
+        @Override
+        public boolean ifFinalizedExternally() {
+            return true;
+        }
+    };
 }
