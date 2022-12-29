@@ -5,6 +5,7 @@ import org.moe.natj.general.ann.ByValue;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
+import org.moe.natj.swift.ann.SwiftClosure;
 import org.moe.swift.test.bindings.protocolTests.TestProtocol;
 
 @Runtime(SwiftRuntime.class)
@@ -41,4 +42,17 @@ public class Global {
 
     @StaticSwiftMethod(symbol = "$s9swiftTest23passBackUnknownProtocolySiAA0bF0_pF")
     public static native long passBackUnknownProtocol(@ByValue TestProtocol protocol);
+
+    @StaticSwiftMethod(symbol = "$s9swiftTest011closurePassB0_10completionS2i_S2iXEtF")
+    public static native long closurePassTest(long par1, @SwiftClosure Callback callback);
+
+    @StaticSwiftMethod(symbol = "$s9swiftTest011closurePassB0_10completionS2i_S2iXEtF")
+    @SwiftClosure
+    public static native Callback closureReturnTest(long par1, @SwiftClosure Callback callback);
+
+
+    @Runtime(SwiftRuntime.class)
+    public interface Callback {
+        long callback_function(long par);
+    }
 }

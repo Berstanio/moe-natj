@@ -87,16 +87,21 @@ void swiftToJavaHandler(ffi_cif* cif, void* result, void** args, void* user) {
     jargs[0] = &env;
 
     jobject* self = (jobject*)alloca(8);
-    // Convert self value to Java
-    ValueConverter<kToJava>(
-        { .env = env,
-            .nvalues = 1,
-            .types = cif->arg_types,
-            .values = &swiftObjectPointerPointer,
-            .infos = info->paramInfos },
-        [self](unsigned n, ffi_type** types, void** values) {
-            memcpy(self, values[0], ffi_type_pointer.size);
-        });
+    if (info->objectToCall == NULL) {
+
+        // Convert self value to Java
+        ValueConverter<kToJava>(
+            { .env = env,
+                .nvalues = 1,
+                .types = cif->arg_types,
+                .values = &swiftObjectPointerPointer,
+                .infos = info->paramInfos },
+            [self](unsigned n, ffi_type** types, void** values) {
+                memcpy(self, values[0], ffi_type_pointer.size);
+            });
+    } else {
+        *self = info->objectToCall;
+    }
 
     jargs[1] = self;
     jargs[2] = &info->methodId;

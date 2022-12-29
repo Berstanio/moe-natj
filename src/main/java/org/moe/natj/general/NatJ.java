@@ -1142,6 +1142,7 @@ public class NatJ {
         info.arg = arg;
         info.callback = callback;
         info.byvalue = byvalue;
+        info.data = type;
 
         if (ConstVoidPtr.class.isAssignableFrom(type)) {
             info.ref = true;
@@ -1150,7 +1151,6 @@ public class NatJ {
             info.ref = false;
             if (type.isAnnotationPresent(SwiftProtocol.class)) {
                 info.packWithEC = true;
-                info.data = type;
             }
             if (mapperClass == null) {
                 if (callback != null) {

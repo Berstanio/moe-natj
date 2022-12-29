@@ -12,6 +12,7 @@ jclass gSwiftConstructor = NULL;
 jclass gSwiftVirtualMethod = NULL;
 jclass gSwiftBindingClass = NULL;
 jclass gSwiftEnumClass = NULL;
+jclass gSwiftClosureClass = NULL;
 
 jmethodID gSwiftMethodSymbolMethod = NULL;
 jmethodID gSwiftProtocolDescriptorMethod = NULL;
@@ -25,6 +26,7 @@ jmethodID gSwiftRuntimeGetPWT = NULL;
 jmethodID gSwiftRuntimeGetAllInheritedInterfaces = NULL;
 jmethodID gSwiftRuntimeRegisterPWT = NULL;
 jmethodID gSwiftRuntimeFindOriginMethods = NULL;
+jmethodID gSwiftRuntimeRegisterClosure = NULL;
 
 jobject getSwiftRuntime() { return gRuntime; }
 
@@ -94,6 +96,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
     gSwiftRuntimeRegisterPWT = env->GetStaticMethodID(gSwiftRuntimeClass, "registerProtocolWitnessTable", "(JLjava/lang/Class;J)V");
     gSwiftRuntimeGetAllInheritedInterfaces = env->GetStaticMethodID(gSwiftRuntimeClass, "getAllInheritedInterfaces", "(Ljava/lang/Class;)[Ljava/lang/Class;");
     gSwiftRuntimeFindOriginMethods = env->GetStaticMethodID(gSwiftRuntimeClass, "findOriginMethods", "(Ljava/lang/reflect/Method;)[Ljava/lang/reflect/Method;");
+    gSwiftRuntimeRegisterClosure = env->GetStaticMethodID(gSwiftRuntimeClass, "registerClosure", "(Ljava/lang/Class;JJ)V");
     gSwiftProtocolDescriptorMethod = env->GetMethodID(gSwiftProtocolAnnotationClass, "protocolDescriptor", "()Ljava/lang/String;");
     env->PushLocalFrame(2);
 
@@ -103,6 +106,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
     gSwiftConstructor = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftConstructor"));
     gSwiftBindingClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftBindingClass"));
     gSwiftEnumClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftEnum"));
+    gSwiftClosureClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftClosure"));
 
     gSwiftMethodSymbolMethod = env->GetMethodID(gSwiftStaticMethod, "symbol", "()Ljava/lang/String;");
     gSwiftMethodOffsetMethod = env->GetMethodID(gSwiftVirtualMethod, "offset", "()J");
@@ -182,8 +186,78 @@ void* generateClassMetadataPointer(JNIEnv* env, jclass type, bool* isClass) {
     return newMetadata;
 }
 
-void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStatic, bool isStructureOrEnum, bool isProtocolClass, void* fnPtr, uint64_t offset) {
+void prepareJavaCallCif(JNIEnv* env, jclass type, jobject method, ffi_cif** closureCifReturn, ToJavaCallInfo** infoReturn) {
+    jobjectArray parametersJava = (jobjectArray)env->CallObjectMethod(method, gGetParameterTypesMethod);
+    jsize parameterCount = env->GetArrayLength(parametersJava);
 
+    jobjectArray parameterAnns = (jobjectArray)env->CallObjectMethod(method, gGetParameterAnnotationsMethod);
+
+    ffi_type** parametersSwift = new ffi_type*[parameterCount + 1]; // First one is self
+    ffi_type** parametersToJava = new ffi_type*[parameterCount + 3]; // JNIEnv*, jobject, jmethodID
+
+    parametersSwift[0] = &ffi_type_pointer;
+
+    parametersToJava[0] = &ffi_type_pointer; // JNIEnv*
+    parametersToJava[1] = &ffi_type_pointer; // jobject
+    parametersToJava[2] = &ffi_type_pointer; // jmethodID
+
+    for (jint i = 0; i < parameterCount; i++) {
+        jclass parameterJava = (jclass)env->GetObjectArrayElement(parametersJava, i);
+        jobjectArray paramAnns = (jobjectArray)env->GetObjectArrayElement(parameterAnns, i);
+        jsize annCount = env->GetArrayLength(paramAnns);
+
+        bool isByValue = false;
+        for (jsize j = 0; j < annCount; j++) {
+            jclass paramAnn = (jclass)env->GetObjectArrayElement(paramAnns, j);
+            if (env->IsInstanceOf(paramAnn, gByValueClass)) {
+                isByValue = true;
+            }
+        }
+
+        parametersToJava[i + 3] = getFFIType(env, parameterJava, false);
+        ffi_type* parameterFFISwift = getFFIType(env, parameterJava, isByValue);
+        if (env->IsAssignableFrom(parameterJava, gStringClass))
+            parameterFFISwift = swiftString;
+        parametersSwift[i + +1] = parameterFFISwift;
+    }
+
+    jobject returnByValueAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gByValueClass);
+    jclass returnJava = (jclass)env->CallObjectMethod(method, gGetReturnTypeMethod);
+    ffi_type* returnToJava = getFFIType(env, returnJava, false);
+    ffi_type* returnSwift = getFFIType(env, returnJava, returnByValueAnnotation != NULL);
+
+    ToJavaCallInfo* info = new ToJavaCallInfo;
+    info->method = env->NewGlobalRef(method);
+    info->jniFunction = getJNICallFunction(env, returnToJava, false);
+    info->methodId = env->FromReflectedMethod(info->method);
+    info->isProtocolCall = false;
+
+    ffi_prep_cif_var(&info->cif, FFI_DEFAULT_ABI, 3, parameterCount + 3, returnToJava, parametersToJava);
+    ffi_cif* closureCif = new ffi_cif;
+    ffi_prep_cif(closureCif, FFI_DEFAULT_ABI, parameterCount + 1, returnSwift, parametersSwift);
+
+    closureCif->flags = closureCif->flags | 256;
+
+    *closureCifReturn = closureCif;
+    *infoReturn = info;
+}
+
+void registerClosure(JNIEnv* env, jclass type) {
+    jobjectArray methods = (jobjectArray)env->CallObjectMethod(type, gGetDeclaredMethodsMethod);
+    jsize length = env->GetArrayLength(methods);
+
+    if (length != 1) {
+        LOGW << "Closure class has more than one method, won't register";
+        return;
+    }
+    jobject method = env->GetObjectArrayElement(methods, 0);
+    ToJavaCallInfo* info;
+    ffi_cif* closureCif;
+    prepareJavaCallCif(env, type, method, &closureCif, &info);
+    env->CallStaticVoidMethod(gSwiftRuntimeClass, gSwiftRuntimeRegisterClosure, type, (jlong)info, (jlong)closureCif);
+}
+
+void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStatic, bool isStructureOrEnum, bool isProtocolClass, void* fnPtr, uint64_t offset) {
     jobjectArray parametersJava = (jobjectArray)env->CallObjectMethod(method, gGetParameterTypesMethod);
     jsize parameterCount = env->GetArrayLength(parametersJava);
 
@@ -212,6 +286,8 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
             jclass paramAnn = (jclass)env->GetObjectArrayElement(paramAnns, j);
             if (env->IsInstanceOf(paramAnn, gByValueClass)) {
                 isByValue = true;
+            } else if (env->IsInstanceOf(paramAnn, gSwiftClosureClass)) {
+                registerClosure(env, parameterJava);
             }
         }
 
@@ -282,56 +358,10 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
 }
 
 void registerJavaMethod(JNIEnv* env, jclass type, jobject method, void* metadataPointer, uint64_t offset, bool patchMetadata = true) {
-    jobjectArray parametersJava = (jobjectArray)env->CallObjectMethod(method, gGetParameterTypesMethod);
-    jsize parameterCount = env->GetArrayLength(parametersJava);
 
-    jobjectArray parameterAnns = (jobjectArray)env->CallObjectMethod(method, gGetParameterAnnotationsMethod);
-
-    ffi_type** parametersSwift = new ffi_type*[parameterCount + 1]; // First one is self
-    ffi_type** parametersToJava = new ffi_type*[parameterCount + 3]; // JNIEnv*, jobject, jmethodID
-
-    parametersSwift[0] = &ffi_type_pointer;
-
-    parametersToJava[0] = &ffi_type_pointer; // JNIEnv*
-    parametersToJava[1] = &ffi_type_pointer; // jobject
-    parametersToJava[2] = &ffi_type_pointer; // jmethodID
-
-    for (jint i = 0; i < parameterCount; i++) {
-        jclass parameterJava = (jclass)env->GetObjectArrayElement(parametersJava, i);
-        jobjectArray paramAnns = (jobjectArray)env->GetObjectArrayElement(parameterAnns, i);
-        jsize annCount = env->GetArrayLength(paramAnns);
-
-        bool isByValue = false;
-        for (jsize j = 0; j < annCount; j++) {
-            jclass paramAnn = (jclass)env->GetObjectArrayElement(paramAnns, j);
-            if (env->IsInstanceOf(paramAnn, gByValueClass)) {
-                isByValue = true;
-            }
-        }
-
-        parametersToJava[i + 3] = getFFIType(env, parameterJava, false);
-        ffi_type* parameterFFISwift = getFFIType(env, parameterJava, isByValue);
-        if (env->IsAssignableFrom(parameterJava, gStringClass))
-            parameterFFISwift = swiftString;
-        parametersSwift[i + +1] = parameterFFISwift;
-    }
-
-    jobject returnByValueAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gByValueClass);
-    jclass returnJava = (jclass)env->CallObjectMethod(method, gGetReturnTypeMethod);
-    ffi_type* returnToJava = getFFIType(env, returnJava, false);
-    ffi_type* returnSwift = getFFIType(env, returnJava, returnByValueAnnotation != NULL);
-
-    ToJavaCallInfo* info = new ToJavaCallInfo;
-    info->method = env->NewGlobalRef(method);
-    info->jniFunction = getJNICallFunction(env, returnToJava, false);
-    info->methodId = env->FromReflectedMethod(info->method);
-    info->isProtocolCall = false;
-
-    ffi_prep_cif_var(&info->cif, FFI_DEFAULT_ABI, 3, parameterCount + 3, returnToJava, parametersToJava);
-    ffi_cif* closureCif = new ffi_cif;
-    ffi_prep_cif(closureCif, FFI_DEFAULT_ABI, parameterCount + 1, returnSwift, parametersSwift);
-
-    closureCif->flags = closureCif->flags | 256;
+    ToJavaCallInfo* info;
+    ffi_cif* closureCif;
+    prepareJavaCallCif(env, type, method, &closureCif, &info);
 
     if (patchMetadata) {
 
@@ -373,6 +403,22 @@ extern "C" void setAtOffset(void* pointer, uint64_t offset, uint8_t toSet) {
 
 extern "C" char getAtOffset(void* pointer, uint64_t offset) {
     return *(char*)get_at_offset(pointer, offset);
+}
+
+jlong JNICALL Java_org_moe_natj_swift_SwiftRuntime_createSwiftClosure(JNIEnv* env, jclass clazz, jobject object, jlong infoL, jlong cifL) {
+    ToJavaCallInfo* info = (ToJavaCallInfo*)infoL;
+
+    ToJavaCallInfo* closureInfo = new ToJavaCallInfo;
+    memcpy(closureInfo, info, sizeof(ToJavaCallInfo));
+    closureInfo->objectToCall = env->NewWeakGlobalRef(object);
+
+    ffi_cif* closureCif = (ffi_cif*)cifL;
+    void* code = NULL;
+    ffi_closure* closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &code);
+
+    ffi_prep_closure_loc(closure, closureCif, swiftToJavaHandler, closureInfo, code);
+
+    return (jlong)code;
 }
 
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type) {

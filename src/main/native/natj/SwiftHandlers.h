@@ -45,6 +45,7 @@ struct ToJavaCallInfo {
     void* jniFunction;
     ffi_cif cif;
     bool isProtocolCall;
+    jobject objectToCall = NULL;
 };
 
 void javaToSwiftHandler(ffi_cif* cif, void* result, void** args, void* user);

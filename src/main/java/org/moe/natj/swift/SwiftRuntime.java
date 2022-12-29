@@ -6,6 +6,7 @@ import org.moe.natj.general.NatJ;
 import org.moe.natj.general.NativeRuntime;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.ann.*;
+import org.moe.natj.swift.map.SwiftClosureMapper;
 import org.moe.natj.swift.map.SwiftObjectMapper;
 import org.moe.natj.swift.map.SwiftStringMapper;
 
@@ -28,13 +29,15 @@ public class SwiftRuntime extends NativeRuntime {
 
     private static HashMap<Class<? extends SwiftEnumObject>, HashMap<Byte, Class<? extends SwiftEnumObject>>> enumToOrdinalCaseMapMap = new HashMap<>();
 
+    private static HashMap<Class<?>, Tuple> classClosureTupleMap = new HashMap<>();
+
     static {
         NatJ.registerRuntime(SwiftRuntime.class);
         NatJ.register();
     }
 
     private SwiftRuntime() {
-        super(SwiftObjectMapper.class, SwiftStringMapper.class, null);
+        super(SwiftObjectMapper.class, SwiftStringMapper.class, SwiftClosureMapper.class);
         initialize(this);
     }
 
@@ -176,6 +179,17 @@ public class SwiftRuntime extends NativeRuntime {
         return enumToOrdinalCaseMapMap.get(swiftEnum).get(ordinal);
     }
 
+    public static void registerClosure(Class<?> interfaceClass, long info, long cif) {
+        classClosureTupleMap.put(interfaceClass, new Tuple(info, cif));
+    }
+
+    public static long createSwiftClosure(Object o, Class<?> interfaceClass) {
+        Tuple tuple = classClosureTupleMap.get(interfaceClass);
+        return createSwiftClosure(o, tuple.info, tuple.cif);
+    }
+
+    public static native long createSwiftClosure(Object o, long info, long cif);
+
     // TODO: 07.12.22 Weeeell, this is silly, since it isn't a swift method... But since the conventions are so similar, it works
     @StaticSwiftMethod(symbol = "dereferencePeer")
     public static native long dereferencePeer(long peer);
@@ -209,4 +223,14 @@ public class SwiftRuntime extends NativeRuntime {
     public static native double forwardDoubleProtocolCall(Class<?> protocolClass, Method method, Object[] args);
     public static native Object forwardObjectProtocolCall(Class<?> protocolClass, Method method, Object[] args);
     public static native void forwardVoidProtocolCall(Class<?> protocolClass, Method method, Object[] args);
+
+    private static class Tuple {
+        private long info;
+        private long cif;
+
+        private Tuple(long info, long cif) {
+            this.info = info;
+            this.cif = cif;
+        }
+    }
 }

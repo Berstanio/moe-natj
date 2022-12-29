@@ -5,6 +5,8 @@ extern jobject getSwiftRuntime();
 extern "C" {
 JNIEXPORT void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass clazz, jobject instance);
 JNIEXPORT void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type);
+JNIEXPORT jlong JNICALL Java_org_moe_natj_swift_SwiftRuntime_createSwiftClosure(JNIEnv* env, jclass clazz, jobject object, jlong infoL, jlong cifL);
+
 void* dereferencePeer(void** peer);
 /**
  * Macros for declaring forwarders for native protocol calls
