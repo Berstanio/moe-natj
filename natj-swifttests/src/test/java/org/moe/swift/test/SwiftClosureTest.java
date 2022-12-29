@@ -20,7 +20,7 @@ public class SwiftClosureTest extends BaseSwiftTest {
         assertEquals(28, Global.closurePassTest(7, (par) -> par + 16));
     }
 
-    @Test
+    //@Test
     public void testReturnPassedClosure() {
         Global.Callback callback = par -> par + 17;
         Global.Callback returned = Global.closureReturnTest(7, callback);

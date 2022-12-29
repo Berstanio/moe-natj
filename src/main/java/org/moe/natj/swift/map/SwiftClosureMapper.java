@@ -27,6 +27,6 @@ public class SwiftClosureMapper implements Mapper {
     @Override
     public Object toJava(long instance, NatJ.JavaObjectConstructionInfo info) {
         if (closureInstanceMap.containsKey(instance)) return closureInstanceMap.get(instance);
-        throw new RuntimeException("Implement unknown closures");
+        throw new RuntimeException("Implement unknown closures " + instance);
     }
 }

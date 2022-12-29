@@ -46,7 +46,7 @@ public class Global {
     @StaticSwiftMethod(symbol = "$s9swiftTest011closurePassB0_10completionS2i_S2iXEtF")
     public static native long closurePassTest(long par1, @SwiftClosure Callback callback);
 
-    @StaticSwiftMethod(symbol = "$s9swiftTest011closurePassB0_10completionS2i_S2iXEtF")
+    @StaticSwiftMethod(symbol = "$s9swiftTest013closureReturnB0_10completionS2icSi_S2ictF")
     @SwiftClosure
     public static native Callback closureReturnTest(long par1, @SwiftClosure Callback callback);
 
