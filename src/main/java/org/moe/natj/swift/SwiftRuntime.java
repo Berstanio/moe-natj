@@ -191,6 +191,9 @@ public class SwiftRuntime extends NativeRuntime {
 
     public static native long createSwiftClosure(Object o, long info, long cif);
 
+    @StaticSwiftMethod(symbol = "deleteSwiftClosure")
+    public static native void releaseSwiftClosure(long closure);
+
     /**
      * Creates a strong pointer to an Objective-C object.
      *
@@ -202,9 +205,9 @@ public class SwiftRuntime extends NativeRuntime {
      * @return The created {@link Pointer} object
      */
     public static Pointer createStrongPointer(long peer, boolean owned) {
-        if (!owned) {
-            SwiftRuntime.retain(peer);
-        }
+        //if (!owned) {
+        //    SwiftRuntime.retain(peer);
+        //}
         return new Pointer(peer, strongObjectReleaser);
     }
 

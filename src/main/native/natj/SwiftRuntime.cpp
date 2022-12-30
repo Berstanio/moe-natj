@@ -31,6 +31,7 @@ jmethodID gSwiftRuntimeRegisterClosure = NULL;
 jobject getSwiftRuntime() { return gRuntime; }
 
 std::unordered_map<jmethodID, ToNativeCallInfo*>* protocolMap = NULL;
+std::unordered_map<void*, ffi_closure*>* funcClosureMap = NULL;
 
 void* dereferencePeer(void** peer) {
     return *peer;
@@ -113,6 +114,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
     gSwiftEnumSizeMethod = env->GetMethodID(gSwiftEnumClass, "size", "()J");
     env->PopLocalFrame(NULL);
     protocolMap = new std::unordered_map<jmethodID, ToNativeCallInfo*>();
+    funcClosureMap = new std::unordered_map<void*, ffi_closure*>;
 }
 
 #define set_at_offset(ptr, type, offset, value) \
@@ -418,7 +420,15 @@ jlong JNICALL Java_org_moe_natj_swift_SwiftRuntime_createSwiftClosure(JNIEnv* en
 
     ffi_prep_closure_loc(closure, closureCif, swiftToJavaHandler, closureInfo, code);
 
+    (*funcClosureMap)[code] = closure;
+    
     return (jlong)code;
+}
+
+extern "C" void deleteSwiftClosure(void* func) {
+    ffi_closure* closure = (*funcClosureMap)[func];
+    delete (ToJavaCallInfo*)closure->user_data;
+    ffi_closure_free(closure);
 }
 
 void JNICALL Java_org_moe_natj_swift_SwiftRuntime_registerClass(JNIEnv* env, jclass clazz, jclass type) {
