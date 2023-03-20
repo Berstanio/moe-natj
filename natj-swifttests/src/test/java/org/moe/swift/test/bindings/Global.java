@@ -3,6 +3,7 @@ package org.moe.swift.test.bindings;
 import org.moe.natj.general.NatJ;
 import org.moe.natj.general.ann.ByValue;
 import org.moe.natj.general.ann.Runtime;
+import org.moe.natj.swift.SwiftArray;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
 import org.moe.natj.swift.ann.SwiftClosure;
@@ -32,6 +33,10 @@ public class Global {
 
     @StaticSwiftMethod(symbol = "$s9swiftTest06stringB0yS2SF")
     public static native String stringTest(String s);
+
+    @StaticSwiftMethod(symbol = "$s9swiftTest05arrayB0Says6UInt64VGyF")
+    @ByValue
+    public static native SwiftArray arrayTest();
 
     @StaticSwiftMethod(symbol = "$s9swiftTest024getUnknownSubClassAsBaseF0AA0hF0CyF")
     public static native BaseClass getUnknownSubClassAsBaseClass();

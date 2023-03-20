@@ -2,6 +2,7 @@ package org.moe.swift.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+import org.moe.natj.swift.SwiftArray;
 import org.moe.swift.test.bindings.Global;
 
 public class SwiftGlobalTest extends BaseSwiftTest{
@@ -42,4 +43,11 @@ public class SwiftGlobalTest extends BaseSwiftTest{
         assertEquals("Hey!", Global.stringTest("Hey"));
         assertEquals("Hey123!", Global.stringTest("Hey123"));
     }
+
+    @Test
+    public void testArray() {
+        SwiftArray t = Global.arrayTest();
+        assertArrayEquals(new long[]{10, 15, 3, 7, 8, 6, 7, 19}, t.getAsJavaArray());
+    }
+
 }

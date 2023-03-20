@@ -10,6 +10,7 @@ jclass gSwiftRuntimeClass = NULL;
 jclass gSwiftStaticMethod = NULL;
 jclass gSwiftConstructor = NULL;
 jclass gSwiftVirtualMethod = NULL;
+jclass gSwiftIndirectReturnMethod = NULL;
 jclass gSwiftBindingClass = NULL;
 jclass gSwiftEnumClass = NULL;
 jclass gSwiftClosureClass = NULL;
@@ -103,6 +104,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
 
     gSwiftStaticMethod = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/StaticSwiftMethod"));
     gSwiftVirtualMethod = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/VirtualSwiftMethod"));
+    gSwiftIndirectReturnMethod = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/IndirectReturnX8"));
 
     gSwiftConstructor = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftConstructor"));
     gSwiftBindingClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftBindingClass"));
@@ -325,7 +327,7 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
 
     ffi_prep_cif(&info->cif, FFI_DEFAULT_ABI, parameterCount + !isStatic, returnFFISwift, parametersSwift);
 
-    jobject swiftConstructorAnnotation = env->CallObjectMethod(method, gGetAnnotationMethod, gSwiftConstructor);
+    bool swiftConstructorAnnotation = env->CallBooleanMethod(method, gIsAnnotationPresentMethod, gSwiftConstructor);
     // SOLVE BETTER
     if ((!isStatic && !needsStructRewrite) || swiftConstructorAnnotation) {
         // Hack, to support x20 registers
@@ -334,6 +336,11 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
     
     if (returnFFISwift->size >= 16 && returnFFISwift->size <= 32) {
         info->cif.flags = info->cif.flags | 3;
+    }
+    
+    bool isIndirectReturn = env->CallBooleanMethod(method, gIsAnnotationPresentMethod, gSwiftIndirectReturnMethod);
+    if (isIndirectReturn) {
+        info->cif.flags = info->cif.flags ^ (info->cif.flags & 31);
     }
 
     if (isProtocolClass) {

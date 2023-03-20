@@ -25,3 +25,9 @@ public func boolTest(_ par1: Bool) -> Bool {
 public func stringTest(_ par1: String) -> String {
     return par1 + "!"
 }
+
+public func arrayTest() -> [UInt64] {
+    var b: [UInt64] = [10, 15, 3, 7, 8, 6, 7]
+    b.append(19)
+    return b
+}
