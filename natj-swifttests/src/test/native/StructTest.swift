@@ -20,6 +20,7 @@ public struct TestMediumStruct {
     public var field1: Int = 1
     public var field2: Int = 2
     public var field3: Int = 3
+    public var field4: Int = 4
 
     public init() {
 
@@ -58,7 +59,7 @@ public func testFuncBig(_ par1: TestBigStruct, _ par2: Int) -> Int {
     return par1.field4 + par2
 }
 
-public func testFuncMedium(_ par1: TestBigStruct, _ par2: Int) -> Int {
+public func testFuncMedium(_ par1: TestMediumStruct, _ par2: Int) -> Int {
     return par1.field4 + par2
 }
 

@@ -331,6 +331,10 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
         // Hack, to support x20 registers
         info->cif.flags = info->cif.flags | 256;
     }
+    
+    if (returnFFISwift->size >= 16 && returnFFISwift->size <= 32) {
+        info->cif.flags = info->cif.flags | 3;
+    }
 
     if (isProtocolClass) {
         // We don't need a closure here, so early exit

@@ -46,10 +46,17 @@ public class TestMediumStruct extends StructObject {
     @StructureField(order = 2, isGetter = false)
     public native void setField3(long field);
 
+    @StructureField(order = 3, isGetter = true)
+    public native long getField4();
+
+    @StructureField(order = 3, isGetter = false)
+    public native void setField4(long field);
+
+
     @StaticSwiftMethod(symbol = "$s9swiftTest0B12MediumStructVMa")
     public static native long getType();
 
-    @StaticSwiftMethod(symbol = "$s9swiftTest14testFuncMediumySiAA0B9BigStructV_SitF")
+    @StaticSwiftMethod(symbol = "$s9swiftTest14testFuncMediumySiAA0bE6StructV_SitF")
     public static native long structTest(@ByValue TestMediumStruct struct, long par2);
 
     @ByValue

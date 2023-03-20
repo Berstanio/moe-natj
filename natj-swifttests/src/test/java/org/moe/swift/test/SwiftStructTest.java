@@ -50,8 +50,11 @@ public class SwiftStructTest extends BaseSwiftTest {
     @Test
     public void testMediumStruct() {
         TestMediumStruct testMediumStruct = new TestMediumStruct();
+        assertEquals(1, testMediumStruct.getField1());
+        assertEquals(2, testMediumStruct.getField2());
         assertEquals(3, testMediumStruct.getField3());
-        assertEquals(4, TestMediumStruct.structTest(testMediumStruct, 1));
+        assertEquals(4, testMediumStruct.getField4());
+        assertEquals(5, TestMediumStruct.structTest(testMediumStruct, 1));
         assertEquals(4, testMediumStruct.getStructNumber(1));
         assertEquals(3, testMediumStruct.getStructNumber());
     }
