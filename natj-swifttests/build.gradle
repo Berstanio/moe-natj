@@ -29,7 +29,17 @@ task compileSwift(type: Exec) {
     workingDir file("src/test/native")
     def asan = []
     if (rootProject.hasProperty("moe.use.addresssanitizer")) asan = ["-sanitize=address"]
-    commandLine = ["swiftc"] + swiftFiles + asan + ["-emit-library", "-g", "-o", "$buildDir/swift/libswiftTest.dylib"]
+    commandLine = ["swiftc"] + swiftFiles + asan + ["-emit-library", "-emit-module", "-emit-module-interface", "-g", "-o", "$buildDir/swift/libswiftTest.dylib"]
+}
+
+task compileABIDescriptor(type: Exec) {
+    dependsOn(compileSwift)
+    def output = new ByteArrayOutputStream()
+    exec {
+        commandLine = ["xcrun", "-sdk", "macosx", "--show-sdk-path"]
+        standardOutput = output
+    }
+    commandLine = ["xcrun", "swift-frontend", "-compile-module-from-interface", file("$buildDir/swift/swiftTest.swiftinterface").absolutePath, "-module-name", "swiftTest", "-sdk", output.toString().trim(), "-emit-abi-descriptor-path", file("$buildDir/swiftAbi/abi.json").absolutePath]
 }
 
 task getSymbols(type: Exec) {
