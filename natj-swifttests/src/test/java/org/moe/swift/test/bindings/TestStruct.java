@@ -9,6 +9,7 @@ import org.moe.natj.general.ann.ByValue;
 import org.moe.natj.general.ann.Runtime;
 import org.moe.natj.swift.SwiftRuntime;
 import org.moe.natj.swift.ann.StaticSwiftMethod;
+import org.moe.natj.swift.ann.StructMutating;
 
 @Structure()
 @Runtime(SwiftRuntime.class)
@@ -55,5 +56,9 @@ public class TestStruct extends StructObject {
 
     @StaticSwiftMethod(symbol = "$s9swiftTest0B6StructV03getC7Number2SiyF")
     public native long getStructNumber();
+
+    @StaticSwiftMethod(symbol = "$s9swiftTest0B6StructV06mutateB0yySiF")
+    @StructMutating
+    public native void mutateTest(long par1);
 
 }

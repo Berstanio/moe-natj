@@ -31,6 +31,14 @@ public class SwiftStructTest extends BaseSwiftTest {
     }
 
     @Test
+    public void testMutatingMethod() {
+        TestStruct struct = new TestStruct();
+        assertEquals(5, struct.getField());
+        struct.mutateTest(17);
+        assertEquals(17, struct.getField());
+    }
+
+    @Test
     public void testStructMethodNoParameter() {
         TestStruct struct = new TestStruct();
         long randomField = struct.getRandomField();

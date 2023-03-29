@@ -14,6 +14,10 @@ public struct TestStruct {
     public func getStructNumber2() -> Int {
         return randomField2
     }
+
+    public mutating func mutateTest(_ par1: Int) {
+        field = par1
+    }
 }
 
 public struct TestMediumStruct {

@@ -9,6 +9,7 @@ jclass gSwiftRuntimeClass = NULL;
 
 jclass gSwiftStaticMethod = NULL;
 jclass gSwiftConstructor = NULL;
+jclass gSwiftStructMutating = NULL;
 jclass gSwiftVirtualMethod = NULL;
 jclass gSwiftIndirectReturnMethod = NULL;
 jclass gSwiftBindingClass = NULL;
@@ -107,6 +108,7 @@ void JNICALL Java_org_moe_natj_swift_SwiftRuntime_initialize(JNIEnv* env, jclass
     gSwiftIndirectReturnMethod = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/IndirectReturnX8"));
 
     gSwiftConstructor = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftConstructor"));
+    gSwiftStructMutating = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/StructMutating"));
     gSwiftBindingClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftBindingClass"));
     gSwiftEnumClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftEnum"));
     gSwiftClosureClass = (jclass)env->NewGlobalRef(env->FindClass("org/moe/natj/swift/ann/SwiftClosure"));
@@ -268,12 +270,15 @@ void registerNativeMethod(JNIEnv* env, jclass type, jobject method, bool isStati
     jobjectArray parameterAnns = (jobjectArray)env->CallObjectMethod(method, gGetParameterAnnotationsMethod);
 
     ffi_type** parametersSwift = new ffi_type*[parameterCount + !isStatic];
+    
+    bool isMutatingStruct = env->CallBooleanMethod(method, gIsAnnotationPresentMethod, gSwiftStructMutating);
 
     bool needsStructRewrite = false;
 
     if (!isStatic) {
-        parametersSwift[0] = getFFIType(env, type, isStructureOrEnum);
-        needsStructRewrite = isStructureOrEnum && parametersSwift[0]->size <= 32;
+        parametersSwift[0] = getFFIType(env, type, isStructureOrEnum && !isMutatingStruct);
+        // Structs bigger don't need to be rewritten, because they end in x20 anyway
+        needsStructRewrite = isStructureOrEnum && !isMutatingStruct && parametersSwift[0]->size <= 32;
     }
 
     ffi_type** parametersFFI = new ffi_type*[parameterCount + 2];
